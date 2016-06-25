@@ -134,8 +134,9 @@
 		G.affecting.Weaken(2)
 		G.affecting.visible_message("<span class='danger'>[G.assailant] pushes [G.affecting] onto [src].</span>", \
 									"<span class='userdanger'>[G.assailant] pushes [G.affecting] onto [src].</span>")
+		
 		playsound(src.loc, 'sound/weapons/push_hard.ogg', 50, 1)
-		add_logs(G.assailant, G.affecting, "pushed")
+		add_logs(G.assailant, G.affecting, "tabled")
 		var/mob/M = G.affecting
 		qdel(I)
 		return M
@@ -292,8 +293,8 @@
 					S.add_blood(H)//it embedded itself in you, of course it's bloody!
 					S.loc = H
 					H.update_damage_overlays() //Update the fancy embeds
-					H.visible_message("<span class='warning'>The [S] has embedded into [H]'s [O.getDisplayName()]!</span>",
-									"<span class='userdanger'>You feel [S] lodge into your [O.getDisplayName()]!</span>")
+					H.visible_message("<span class='warning'>The [S] has embedded into [H]'s [O]!</span>",
+									"<span class='userdanger'>You feel [S] lodge into your [O]!</span>")
 					H.emote("scream")
 		qdel(src)
 

@@ -44,10 +44,8 @@
 	result = /obj/item/weapon/melee/baton/cattleprod
 	reqs = list(/obj/item/weapon/restraints/handcuffs/cable = 1,
 				/obj/item/stack/rods = 1,
-				/obj/item/weapon/wirecutters = 1,
-				/obj/item/weapon/stock_parts/cell = 1)
+				/obj/item/weapon/wirecutters = 1)
 	time = 80
-	parts = list(/obj/item/weapon/stock_parts/cell = 1)
 	category = CAT_WEAPON
 
 /datum/table_recipe/ed209
@@ -247,13 +245,4 @@
 	tools = list(/obj/item/weapon/weldingtool)
 	reqs = list(/obj/item/stack/sheet/metal = 2)
 	time = 120
-	category = CAT_WEAPON
-
-/datum/table_recipe/tooth_hatchet //For teeth hatchet
-	name = "Tooth hatchet"
-	result = /obj/item/weapon/hatchet/tooth
-	reqs = list(/obj/item/stack/rods = 1,
-				/obj/item/stack/cable_coil = 10,
-				/obj/item/stack/teeth = 3)
-	time = 80
 	category = CAT_WEAPON

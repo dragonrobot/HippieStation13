@@ -193,13 +193,13 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 		return 0
 	return 1
 /*
- PLANTPEOPLE
+ PODPEOPLE
 */
 
-/datum/species/plant
-	// Creatures made of leaves and plant matter.
-	name = "Plant"
-	id = "plant"
+/datum/species/pod
+	// A mutation caused by a human being ressurected in a revival pod. These regain health in light, and begin to wither in darkness.
+	name = "Podperson"
+	id = "pod"
 	default_color = "59CE00"
 	specflags = list(MUTCOLORS,EYECOLOR)
 	attack_verb = "slash"
@@ -209,13 +209,32 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	heatmod = 1.5
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/plant
 
-/datum/species/plant/handle_chemicals(datum/reagent/chem, mob/living/carbon/human/H)
+/datum/species/pod/spec_life(mob/living/carbon/human/H)
+	var/light_amount = 0 //how much light there is in the place, affects receiving nutrition and healing
+	if(isturf(H.loc)) //else, there's considered to be no light
+		var/turf/T = H.loc
+		var/area/A = T.loc
+		if(A)
+			if(A.lighting_use_dynamic)	light_amount = min(10,T.lighting_lumcount) - 5
+			else						light_amount =  5
+		H.nutrition += light_amount
+		if(H.nutrition > NUTRITION_LEVEL_FULL)
+			H.nutrition = NUTRITION_LEVEL_FULL
+		if(light_amount > 2) //if there's enough light, heal
+			H.heal_overall_damage(1,1,0.02)
+			H.adjustToxLoss(-1)
+			H.adjustOxyLoss(-1)
+
+	if(H.nutrition < NUTRITION_LEVEL_STARVING + 50)
+		H.take_overall_damage(2,0)
+
+/datum/species/pod/handle_chemicals(datum/reagent/chem, mob/living/carbon/human/H)
 	if(chem.id == "plantbgone")
 		H.adjustToxLoss(3)
 		H.reagents.remove_reagent(chem.id, REAGENTS_METABOLISM)
 		return 1
 
-/datum/species/plant/on_hit(proj_type, mob/living/carbon/human/H)
+/datum/species/pod/on_hit(proj_type, mob/living/carbon/human/H)
 	switch(proj_type)
 		if(/obj/item/projectile/energy/floramut)
 			if(prob(15))
@@ -233,33 +252,6 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 		if(/obj/item/projectile/energy/florayield)
 			H.nutrition = min(H.nutrition+30, NUTRITION_LEVEL_FULL)
 	return
-
-
-/*
- PODPEOPLE
-*/
-
-/datum/species/plant/pod
-	// A mutation caused by a human being ressurected in a revival pod. These regain health in light, and begin to wither in darkness.
-	name = "Podperson"
-	id = "pod"
-	specflags = list(MUTCOLORS,EYECOLOR)
-
-/datum/species/plant/pod/spec_life(mob/living/carbon/human/H)
-	var/light_amount = 0 //how much light there is in the place, affects receiving nutrition and healing
-	if(isturf(H.loc)) //else, there's considered to be no light
-		var/turf/T = H.loc
-		light_amount = min(10,T.get_lumcount()) - 5
-		H.nutrition += light_amount
-		if(H.nutrition > NUTRITION_LEVEL_FULL)
-			H.nutrition = NUTRITION_LEVEL_FULL
-		if(light_amount > 2) //if there's enough light, heal
-			H.heal_overall_damage(1,1)
-			H.adjustToxLoss(-1)
-			H.adjustOxyLoss(-1)
-
-	if(H.nutrition < NUTRITION_LEVEL_STARVING + 50)
-		H.take_overall_damage(2,0)
 
 /*
  SHADOWPEOPLE
@@ -284,7 +276,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 		if(light_amount > 2) //if there's enough light, start dying
 			H.take_overall_damage(1,1)
 		else if (light_amount < 2) //heal in the dark
-			H.heal_overall_damage(1,1)
+			H.heal_overall_damage(1,1,0.02)
 
 /*
  SLIMEPEOPLE
@@ -307,6 +299,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	burnmod = 0.5
 	coldmod = 2
 	heatmod = 0.5
+	has_dismemberment = 0
 
 /datum/species/slime/spec_life(mob/living/carbon/human/H)
 	if(!H.reagents.get_reagent_amount("slimejelly"))
@@ -415,6 +408,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/slime
 	exotic_blood = /datum/reagent/toxin/slimejelly
 	var/recently_changed = 1
+	has_dismemberment = 0
 
 /datum/species/jelly/spec_life(mob/living/carbon/human/H)
 	if(!H.reagents.get_reagent_amount("slimejelly"))
@@ -454,7 +448,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	no_equip = list(slot_wear_mask, slot_wear_suit, slot_gloves, slot_shoes, slot_head, slot_w_uniform)
 	nojumpsuit = 1
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/golem
-
+	has_dismemberment = 0
 
 /*
  ADAMANTINE GOLEMS
@@ -464,6 +458,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	name = "Adamantine Golem"
 	id = "adamantine"
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/golem/adamantine
+	specflags = list(NOBREATH,HEATRES,COLDRES,NOFIRE,NOGUNS,NOBLOOD,VIRUSIMMUNE,PIERCEIMMUNE)
 
 /*
  Mr. Meeseeks
@@ -484,7 +479,6 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	no_equip = list(slot_wear_mask, slot_wear_suit, slot_gloves, slot_shoes, slot_head, slot_w_uniform)
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/meeseeks
 	nojumpsuit = 1
-	meat = null
 	exotic_blood = null //insert white blood later
 	say_mod = "yells"
 	var/stage = 1 //stage to control Meeseeks desperation
@@ -634,7 +628,8 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	roundstart = 1
 	sexes = 0
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human/mutant/skeleton
-	specflags = list(MUTCOLORS,EYECOLOR)
+	specflags = list(EYECOLOR)
+	attack_sound = 'sound/misc/skeletonhit.ogg'
 
 /datum/species/skeleton/New()
 	..()
@@ -663,7 +658,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 	// specflags = list(NOBREATH,HEATRES,COLDRES,NOBLOOD,RADIMMUNE) //Overpowered, and simple_mobs set the species to this
 
 /datum/species/zombie/handle_speech(message)
-	var/list/message_list = text2list(message, " ")
+	var/list/message_list = splittext(message, " ")
 	var/maxchanges = max(round(message_list.len / 1.5), 2)
 
 	for(var/i = rand(maxchanges / 2, maxchanges), i > 0, i--)
@@ -676,7 +671,7 @@ datum/species/human/spec_death(gibbed, mob/living/carbon/human/H)
 		if(prob(20) && message_list.len > 3)
 			message_list.Insert(insertpos, "[pick("BRAINS", "Brains", "Braaaiinnnsss", "BRAAAIIINNSSS")]...")
 
-	return list2text(message_list, " ")
+	return jointext(message_list, " ")
 
 /datum/species/cosmetic_zombie
 	name = "Human"
@@ -726,17 +721,6 @@ var/global/image/plasmaman_on_fire = image("icon"='icons/mob/OnFire.dmi', "icon_
 	safe_toxins_min = 16 //We breath THIS!
 	safe_toxins_max = 0
 	dangerous_existence = 1 //So so much
-	var/skin = 0
-
-/datum/species/plasmaman/skin
-	name = "Skinbone"
-	skin = 1
-
-/datum/species/plasmaman/update_base_icon_state(mob/living/carbon/human/H)
-	var/base = ..()
-	if(base == id)
-		base = "[base][skin]"
-	return base
 
 /datum/species/plasmaman/spec_life(mob/living/carbon/human/H)
 	var/datum/gas_mixture/environment = H.loc.return_air()

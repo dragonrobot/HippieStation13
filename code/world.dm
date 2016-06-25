@@ -60,7 +60,7 @@ var/global/list/map_transition_config = MAP_TRANSITION_CONFIG
 
 
 	spawn(-1)
-		Master.Setup()
+		master_controller.setup()
 
 	process_teleport_locs()			//Sets up the wizard teleport locations
 	SortAreas()						//Build the list of all existing areas and sort it alphabetically
@@ -152,14 +152,20 @@ var/global/list/map_transition_config = MAP_TRANSITION_CONFIG
 	if(ticker.delay_end)
 		world << "<span class='boldannounce'>An admin has delayed the round end.</span>"
 		return
+
 	world << "<span class='boldannounce'>Rebooting World in [delay/10] [delay > 10 ? "seconds" : "second"]. [reason]</span>"
+
 	sleep(delay)
+
 	if(blackbox)
 		blackbox.save_all_data_to_sql()
+
 	if(ticker.delay_end)
 		world << "<span class='boldannounce'>Reboot was cancelled by an admin.</span>"
 		return
+
 	feedback_set_details("[feedback_c]","[feedback_r]")
+
 	log_game("<span class='boldannounce'>Rebooting World. [reason]</span>")
 	//kick_clients_in_lobby("<span class='boldannounce'>The round came to an end with you in the lobby.</span>", 1) //second parameter ensures only afk clients are kicked
 	#ifdef dellogging
@@ -196,6 +202,7 @@ var/global/list/map_transition_config = MAP_TRANSITION_CONFIG
 	join_motd = file2text("config/motd.txt")
 
 /world/proc/load_configuration()
+	protected_config = new /datum/protected_configuration()
 	config = new /datum/configuration()
 	config.load("config/config.txt")
 	config.load("config/game_options.txt","game_options")
@@ -251,7 +258,7 @@ var/global/list/map_transition_config = MAP_TRANSITION_CONFIG
 		features += "hosted by <b>[config.hostedby]</b>"
 
 	if (features)
-		s += ": [list2text(features, ", ")]"
+		s += ": [jointext(features, ", ")]"
 
 	/* does this help? I do not know */
 	if (src.status != s)

@@ -27,13 +27,13 @@ Head of Security
 			            access_research, access_engine, access_mining, access_medical, access_construction, access_mailsorting,
 			            access_heads, access_hos, access_RC_announce, access_keycard_auth, access_gateway, access_research,
 			            access_captain, access_genetics, access_tox, access_robotics, access_atmospherics, access_chapel_office,
-			            access_cargo, access_hydroponics, access_bar, access_kitchen)
+			            access_cargo, access_hydroponics, access_bar, access_kitchen, access_outpost)
 	minimal_access = list(access_security, access_sec_doors, access_brig, access_armory, access_court, access_weapons,
 			            access_forensics_lockers, access_morgue, access_maint_tunnels, access_all_personal_lockers,
 			            access_research, access_engine, access_mining, access_medical, access_construction, access_mailsorting,
 			            access_heads, access_hos, access_RC_announce, access_keycard_auth, access_gateway, access_captain,
 			            access_research, access_genetics, access_tox, access_robotics, access_atmospherics, access_chapel_office,
-			            access_hydroponics, access_bar, access_kitchen, access_cargo)
+			            access_hydroponics, access_bar, access_kitchen, access_cargo, access_outpost)
 
 /datum/outfit/job/hos
 	name = "Head of Security"
@@ -45,7 +45,7 @@ Head of Security
 	shoes = /obj/item/clothing/shoes/jackboots
 	suit = /obj/item/clothing/suit/armor/hos/trenchcoat
 	gloves = /obj/item/clothing/gloves/color/black/hos
-	head = /obj/item/clothing/head/HoS/beret
+	head = /obj/item/clothing/head/HoS
 	glasses = /obj/item/clothing/glasses/hud/security/sunglasses
 	suit_store = /obj/item/weapon/gun/energy/gun
 	backpack_contents = list(/obj/item/weapon/melee/classic_baton/telescopic=1,\
@@ -54,6 +54,7 @@ Head of Security
 	backpack = /obj/item/weapon/storage/backpack/security
 	satchel = /obj/item/weapon/storage/backpack/satchel_sec
 	duffle = /obj/item/weapon/storage/backpack/dufflebag/sec
+	box = /obj/item/weapon/storage/box/security
 
 /datum/outfit/job/hos/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	..()
@@ -114,6 +115,7 @@ Warden
 	backpack = /obj/item/weapon/storage/backpack/security
 	satchel = /obj/item/weapon/storage/backpack/satchel_sec
 	duffle = /obj/item/weapon/storage/backpack/dufflebag/sec
+	box = /obj/item/weapon/storage/box/security
 
 /datum/outfit/job/warden/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	..()
@@ -216,7 +218,7 @@ var/list/sec_departments = list("engineering", "supply", "medical", "science")
 	ears = /obj/item/device/radio/headset/headset_sec/alt
 	uniform = /obj/item/clothing/under/rank/security
 	gloves = /obj/item/clothing/gloves/color/black
-	head = /obj/item/clothing/head/beret/sec
+	head = /obj/item/clothing/head/helmet/sec
 	suit = /obj/item/clothing/suit/armor/vest
 	shoes = /obj/item/clothing/shoes/jackboots
 	l_pocket = /obj/item/device/assembly/flash/handheld

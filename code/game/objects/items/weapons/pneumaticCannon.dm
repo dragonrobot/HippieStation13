@@ -2,7 +2,8 @@
 	name = "pneumatic cannon"
 	desc = "A gas-powered cannon that can fire any object loaded into it."
 	w_class = 4
-	force = 8 //Very heavy
+	force = 8
+	stamina_percentage = 0.5
 	attack_verb = list("bludgeoned", "smashed", "beaten")
 	icon = 'icons/obj/pneumaticCannon.dmi'
 	icon_state = "pneumaticCannon"
@@ -71,11 +72,20 @@
 		return
 
 
-/obj/item/weapon/pneumatic_cannon/afterattack(atom/target as mob|obj|turf, mob/living/carbon/human/user as mob|obj, flag, params)
+/obj/item/weapon/pneumatic_cannon/afterattack(atom/target, mob/living/carbon/human/user, flag, params)
+	if(istype(target, /obj/item/weapon/storage) || istype(target, /obj/structure/rack) || istype(target, /obj/structure/closet)) //So you can store it in backpacks,closets and racks
+		return ..()
+	if(!istype(user))
+		return ..()
 	if(target in user.contents) // to avoid shooting yourself by putting this thing in the backpack
 		return
 	if(user.a_intent == "harm" || !ishuman(user))
 		return ..()
+	Fire(user, target)
+
+/obj/item/weapon/pneumatic_cannon/proc/Fire(mob/living/carbon/human/user, atom/target)
+	if(!istype(user) && !target)
+		return
 	if(!loadedItems || !loadedWeightClass)
 		user << "<span class='warning'>\The [src] has nothing loaded.</span>"
 		return
@@ -94,17 +104,19 @@
 			loadedItems.Remove(ITD)
 			loadedWeightClass -= ITD.w_class
 			ITD.throw_speed = pressureSetting * 2
+			ITD.throwforce += 1 //So things like baseballs actually can KO and stuff
 			ITD.loc = get_turf(src)
-			ITD.throw_at(target, pressureSetting * 5, pressureSetting * 2)
+			ITD.throw_at(target, pressureSetting * 5, pressureSetting * 2, zone=user.zone_sel.selecting)
 	if(pressureSetting >= 3)
-		user << "<span class='boldannounce'>\The [src]'s recoil knocks you down!</span>"
+		user.visible_message("<span class='warning'>[user] is thrown down by the force of the cannon!</span>", "<span class='userdanger'>[src] slams into your shoulder, knocking you down!")
 		user.Weaken(2)
-
+		user.Stun(2)
 
 /obj/item/weapon/pneumatic_cannon/ghetto //Obtainable by improvised methods; more gas per use, less capacity, but smaller
 	name = "improvised pneumatic cannon"
 	desc = "A gas-powered, object-firing cannon made out of common parts."
 	force = 5
+	stamina_percentage = 0.5
 	w_class = 3
 	maxWeightClass = 10
 	gasPerThrow = 5

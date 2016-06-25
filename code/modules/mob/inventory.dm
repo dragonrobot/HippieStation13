@@ -15,7 +15,7 @@
 
 //Returns if a certain item can be equipped to a certain slot.
 // Currently invalid for two-handed items - call obj/item/mob_can_equip() instead.
-/mob/proc/can_equip(obj/item/I, slot, disable_warning = 0)
+/mob/proc/can_equip(obj/item/I, slot, disable_warning = 0, return_equipped = 0)
 	return 0
 
 //Puts the item into your l_hand if possible and calls all necessary triggers/updates. returns 1 on success.
@@ -93,17 +93,23 @@
 
 
 //Drops the item in our left hand
-/mob/proc/drop_l_hand() //I really fucking wonder why this proc had an argument holy shit.
+/mob/proc/drop_l_hand(var/dismember) //I really fucking wonder why this proc had an argument holy shit.
 	if(!loc.allow_drop())
 		return
-	return unEquip(l_hand) //All needed checks are in unEquip
+	if(dismember)
+		return unEquip(l_hand, 1)
+	else
+		return unEquip(l_hand)
 
 
 //Drops the item in our right hand
-/mob/proc/drop_r_hand()
+/mob/proc/drop_r_hand(var/dismember)
 	if(!loc.allow_drop())
 		return
-	return unEquip(r_hand) //Why was this not calling unEquip in the first place jesus fuck.
+	if(dismember)
+		return unEquip(r_hand, 1)
+	else
+		return unEquip(r_hand)
 
 
 //Drops the item in our active hand.

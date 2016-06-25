@@ -27,6 +27,7 @@
 	item_state = "nullrod"
 	slot_flags = SLOT_BELT
 	force = 15
+	stamina_percentage = 0.7
 	throw_speed = 3
 	throw_range = 4
 	throwforce = 10
@@ -43,10 +44,12 @@
 	item_state = "sord"
 	slot_flags = SLOT_BELT
 	force = 2
+	stamina_percentage = 0.95  //Unbelievably shitty sword, can't even fathom killing anyone with it.
 	throwforce = 1
 	w_class = 3
 	hitsound = 'sound/weapons/bladeslice.ogg'
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
+	sharpness = IS_SHARP_ACCURATE
 
 /obj/item/weapon/sord/suicide_act(mob/user)
 	user.visible_message("<span class='suicide'>[user] is impaling \himself with the [src.name]! It looks like \he's trying to commit suicide.</span>")
@@ -64,7 +67,8 @@
 	throwforce = 10
 	w_class = 3
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
-	block_chance = 50
+	block_chance = list(melee = 70, bullet = 30, laser = 0, energy = 0) //How do you even block lasers with a claymore!?
+	sharpness = IS_SHARP_ACCURATE
 
 /obj/item/weapon/claymore/suicide_act(mob/user)
 	user.visible_message("<span class='suicide'>[user] is falling on the [src.name]! It looks like \he's trying to commit suicide.</span>")
@@ -82,7 +86,8 @@
 	w_class = 3
 	hitsound = 'sound/weapons/bladeslice.ogg'
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
-	block_chance = 50
+	block_chance = list(melee = 80, bullet = 40, laser = 40, energy = 30) //Decent...ish
+	sharpness = IS_SHARP_ACCURATE
 
 /obj/item/weapon/katana/cursed
 	slot_flags = null
@@ -98,6 +103,7 @@
 	item_state = "rods"
 	flags = CONDUCT
 	force = 9
+	stamina_percentage = 0.65
 	throwforce = 10
 	w_class = 3
 	materials = list(MAT_METAL=1000)
@@ -164,41 +170,88 @@
 	new /obj/item/weapon/throwing_star(src)
 	new /obj/item/weapon/throwing_star(src)
 	new /obj/item/weapon/throwing_star(src)
+	new /obj/item/weapon/throwing_star(src)
+	new /obj/item/weapon/throwing_star(src)
 
+/obj/item/weapon/caltrop
+	name = "caltrop"
+	desc = "Small, spiked traps designed to hamper pursuers when left on the ground."
+	icon_state = "caltrop"
+	item_state = "caltrop"
+	force = 5
+	throwforce = 10
+	throw_speed = 4
+	embedded_pain_multiplier = 4
+	w_class = 2
+	embed_chance = 35
+	sharpness = IS_SHARP
+	attack_verb = list("stabbed", "impaled")
 
+/obj/item/weapon/caltrop/Crossed(AM as mob|obj)
+	if (istype(AM, /mob/living/carbon/human))
+		var/mob/living/carbon/M = AM
+		M.adjustStaminaLoss(8)
+		var/mob/living/carbon/human/H = AM
+		if(!(PIERCEIMMUNE in H.dna.species.specflags))
+			var/obj/item/organ/limb/O = H.get_organ(pick("l_leg", "r_leg"))
+			H.apply_damage(10, BRUTE, O)
+			if(prob(embed_chance)*2)
+				H.throw_alert("embeddedobject", /obj/screen/alert/embeddedobject)
+				O.embedded_objects |= src
+				src.add_blood(H)//it embedded itself in you, of course it's bloody!
+				src.loc = H
+				H.visible_message("<span class='warning'>\The [src] has embedded into [H]'s [O]!</span>",
+								"<span class='userdanger'>You feel [src] lodge into your [O]!</span>")
+				H.update_damage_overlays() //Update the fancy embeds
+				H.emote("scream")
+		return 1
+
+obj/item/weapon/storage/box/caltrop
+	name = "box"
+
+obj/item/weapon/storage/box/caltrop/New()
+	..()
+	contents = list()
+	new /obj/item/weapon/caltrop(src)
+	new /obj/item/weapon/caltrop(src)
+	new /obj/item/weapon/caltrop(src)
+	new /obj/item/weapon/caltrop(src)
+	new /obj/item/weapon/caltrop(src)
 
 /obj/item/weapon/switchblade
 	name = "switchblade"
 	icon_state = "switchblade"
 	desc = "A sharp, concealable, spring-loaded knife."
 	flags = CONDUCT
-	force = 15
+	force = 3
 	w_class = 2
-	throwforce = 15
+	throwforce = 5
 	throw_speed = 3
 	throw_range = 6
 	materials = list(MAT_METAL=12000)
 	origin_tech = "materials=1"
 	hitsound = 'sound/weapons/Genhit.ogg'
 	attack_verb = list("stubbed", "poked")
-	var/extended
+	var/extended = 0
 
 /obj/item/weapon/switchblade/attack_self(mob/user)
 	extended = !extended
 	playsound(src.loc, 'sound/weapons/batonextend.ogg', 50, 1)
 	if(extended)
 		playsound(user, 'sound/weapons/raise.ogg', 20, 1, -4)
-		force = 15
+		force = 20
 		w_class = 3
 		throwforce = 15
+		sharpness = IS_SHARP_ACCURATE
 		icon_state = "switchblade_ext"
 		attack_verb = list("slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
 		hitsound = 'sound/weapons/bladeslice.ogg'
 	else
 		playsound(user, 'sound/weapons/raise.ogg', 20, 1, -4)
-		force = 1
+		force = 3
 		w_class = 2
 		throwforce = 5
+		sharpness = IS_BLUNT
 		icon_state = "switchblade"
 		attack_verb = list("stubbed", "poked")
 		hitsound = 'sound/weapons/Genhit.ogg'
@@ -235,7 +288,7 @@
 	if (active)
 		force = active_force
 		throwforce = 14
-		sharpness = IS_SHARP
+		sharpness = IS_SHARP_ACCURATE
 		hitsound = 'sound/weapons/knife.ogg'
 		attack_verb = list("stabbed", "torn", "cut", "sliced")
 		icon_state = "pocketknife_open"
@@ -288,9 +341,16 @@
 	burn_state = 0
 	attack_verb = list("bludgeoned", "whacked", "disciplined", "thrashed")
 
+/obj/item/weapon/cane/update_slowdown(mob/user)
+	var/mob/living/carbon/human/H = user
+	var/slow = 0
+	if(istype(H))
+		slow = (H.get_num_legs(1) < 2) ? -2 : 0 //Negates slowdown caused by lack of a leg
+	return slow
+
 /obj/item/weapon/staff
 	name = "wizards staff"
-	desc = "Apparently a staff used by the wizard."
+	desc = "Apparently a staff used by the wizard. Can be used as a crutch."
 	icon = 'icons/obj/wizard.dmi'
 	icon_state = "staff"
 	force = 3
@@ -302,15 +362,22 @@
 	attack_verb = list("bludgeoned", "whacked", "disciplined")
 	burn_state = 0 //Burnable
 
+/obj/item/weapon/staff/update_slowdown(mob/user)
+	var/mob/living/carbon/human/H = user
+	var/slow = 0
+	if(istype(H))
+		slow = (H.get_num_legs(1) < 2) ? -2 : 0 //Negates slowdown caused by lack of a leg
+	return slow
+
 /obj/item/weapon/staff/broom
 	name = "broom"
-	desc = "Used for sweeping, and flying into the night while cackling. Black cat not included."
+	desc = "Used for sweeping, and flying into the night while cackling. Black cat not included. Can be used as a crutch."
 	icon = 'icons/obj/wizard.dmi'
 	icon_state = "broom"
 
 /obj/item/weapon/staff/stick
 	name = "stick"
-	desc = "A great tool to drag someone else's drinks across the bar."
+	desc = "A great tool to drag someone else's drinks across the bar. Can be used as a crutch."
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "stick"
 	item_state = "stick"
@@ -356,7 +423,7 @@
 
 /obj/item/weapon/cane/pimpstick
 	name = "pimp stick"
-	desc = "A gold-rimmed cane, with a gleaming diamond set at the top. Great for bashing in kneecaps."
+	desc = "A gold-rimmed cane, with a gleaming diamond set at the top. Great for bashing in kneecaps. Can be used as a crutch."
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "pimpstick"
 	item_state = "pimpstick"
@@ -365,5 +432,3 @@
 	w_class = 3
 	flags = NOSHIELD
 	attack_verb = list("pimped", "smacked", "disciplined", "busted", "capped", "decked")
-
-

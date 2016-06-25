@@ -484,8 +484,13 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 /obj/item/stack/cable_coil/New(loc, amount = MAXCOIL, var/param_color = null)
 	..()
 	src.amount = amount
+
 	if(param_color)
 		item_color = param_color
+	else
+		item_color = pick("red","yellow","green","blue","pink")
+
+	icon_state = "coil_[item_color]"
 	pixel_x = rand(-2,2)
 	pixel_y = rand(-2,2)
 	update_icon()
@@ -507,29 +512,30 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 
 /obj/item/stack/cable_coil/building_checks(datum/stack_recipe/R, multiplier)
 	if(R.title == "noose")
-		if(!(locate(/obj/structure/stool) in usr.loc) && !(locate(/obj/structure/table) in usr.loc) && !(locate(/obj/structure/toilet) in usr.loc))
+		if(!(locate(/obj/structure/stool) in usr.loc) && !(locate(/obj/structure/bed) in usr.loc) && !(locate(/obj/structure/table) in usr.loc) && !(locate(/obj/structure/toilet) in usr.loc))
 			usr << "<span class='warning'>You have to be standing on top of a chair/table/toilet to make a noose!</span>"
 			return 0
 	return ..()
 
 /obj/item/stack/cable_coil/suicide_act(mob/living/user)
-	if((locate(/obj/structure/stool) in user.loc) || (locate(/obj/structure/table) in user.loc) || (locate(/obj/structure/toilet) in user.loc))
+	if((locate(/obj/structure/stool) in user.loc) || (locate(/obj/structure/bed) in usr.loc) || (locate(/obj/structure/table) in user.loc) || (locate(/obj/structure/toilet) in user.loc))
 		user.visible_message("<span class='suicide'>[user] is making a noose with the [src]! It looks like \he's trying to commit suicide.</span>")
 		if(do_after(user, 20, target = user.loc))
 			qdel(src)
 			var/obj/structure/noose/N = new(get_turf(user.loc))
 			N.buckle_mob(user)
 			var/obj/item/organ/limb/affecting = null
-			if(ishuman(user))
-				var/mob/living/carbon/human/H = user
-				affecting = H.get_organ("head")
-			user.say("--Hrnk!!")
-			user.apply_damage(max(100 - user.getBruteLoss(), 0), BRUTE, affecting) //Pretty hardcore damage
-			user.adjustOxyLoss(30)
-			playsound(user.loc, 'sound/effects/noosed.ogg', 50, 1, -1)
-			playsound(user.loc, 'sound/misc/crack.ogg', 50, 1, -3)
-			user << "<span class='suicide'>With a loud crack in your neck, you feel your consciousness slipping away...</span>"
-			return
+			if(user.mob_has_gravity)
+				if(ishuman(user))
+					var/mob/living/carbon/human/H = user
+					affecting = H.get_organ("head")
+				user.say("--Hrnk!!")
+				user.apply_damage(max(100 - user.getBruteLoss(), 0), BRUTE, affecting) //Pretty hardcore damage
+				user.adjustOxyLoss(30)
+				playsound(user.loc, 'sound/effects/noosed.ogg', 50, 1, -1)
+				playsound(user.loc, 'sound/misc/crack.ogg', 50, 1, -3)
+				user << "<span class='suicide'>With a loud crack in your neck, you feel your consciousness slipping away...</span>"
+				return
 		else
 			return
 	else
@@ -553,7 +559,7 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 /obj/structure/noose/attackby(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/weapon/wirecutters))
 		user.visible_message("[user] cuts the noose.", "<span class='notice'>You cut the noose.</span>")
-		if(buckled_mob)
+		if(buckled_mob && buckled_mob.mob_has_gravity)
 			buckled_mob.visible_message("<span class='danger'>[buckled_mob] falls over and hits the ground!</span>",\
 										"<span class='userdanger'>You fall over and hit the ground!</span>")
 			buckled_mob.adjustBruteLoss(10)
@@ -617,9 +623,20 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 		unbuckle_mob()
 		add_fingerprint(user)
 
-/obj/structure/noose/user_buckle_mob(mob/living/M, mob/user)
+/obj/structure/noose/user_buckle_mob(mob/living/carbon/human/M, mob/user)
 	if(!in_range(user, src) || user.stat || user.restrained() || !iscarbon(M))
 		return 0
+
+	var/hashead = 0
+
+	for(var/obj/item/organ/limb/temp in M.organs) //Checks if the target has a head.
+		if(temp.body_part == HEAD)
+			hashead = 1
+
+	if(hashead != 1)
+		user << "<span class='danger'>They don't have a head....</span>"
+		return 0
+
 	if(M.loc != src.loc) return 0 //Can only noose someone if they're on the same tile as noose
 
 	add_fingerprint(user)
@@ -672,21 +689,23 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 		if(3) //Every third tick it plays a sound and RNG's a flavor text
 			pixel_x += 1
 			buckled_mob.pixel_x += 1
-			if(prob(50))
-				var/flavor_text = list("<span class='suicide'>[buckled_mob]'s legs flail for anything to stand on.</span>",\
-										"<span class='suicide'>[buckled_mob]'s hands are desperately clutching the noose.</span>",\
-										"<span class='suicide'>[buckled_mob]'s limbs sway back and forth with diminishing strength.</span>")
-				if(buckled_mob.stat == DEAD)
-					flavor_text = list("<span class='suicide'>[buckled_mob]'s limbs lifelessly sway back and forth.</span>",\
-										"<span class='suicide'>[buckled_mob]'s eyes stare straight ahead.</span>")
-				buckled_mob.visible_message(pick(flavor_text))
-			playsound(buckled_mob.loc, 'sound/effects/noose_idle.ogg', 50, 1, -3)
+			if(buckled_mob.mob_has_gravity)
+				if(prob(50))
+					var/flavor_text = list("<span class='suicide'>[buckled_mob]'s legs flail for anything to stand on.</span>",\
+											"<span class='suicide'>[buckled_mob]'s hands are desperately clutching the noose.</span>",\
+											"<span class='suicide'>[buckled_mob]'s limbs sway back and forth with diminishing strength.</span>")
+					if(buckled_mob.stat == DEAD)
+						flavor_text = list("<span class='suicide'>[buckled_mob]'s limbs lifelessly sway back and forth.</span>",\
+											"<span class='suicide'>[buckled_mob]'s eyes stare straight ahead.</span>")
+					buckled_mob.visible_message(pick(flavor_text))
+				playsound(buckled_mob.loc, 'sound/effects/noose_idle.ogg', 50, 1, -3)
 		if(4)
 			pixel_x = initial(pixel_x)
 			buckled_mob.pixel_x = initial(buckled_mob.pixel_x)
 			ticks = 0
-	buckled_mob.adjustOxyLoss(5)
-	buckled_mob.emote("gasp")
+	if(buckled_mob.mob_has_gravity)
+		buckled_mob.adjustOxyLoss(5)
+		buckled_mob.emote("gasp")
 
 ///////////////////////////////////
 // General procedures
@@ -699,7 +718,7 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 
 	var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_sel.selecting))
 	if(affecting.status == ORGAN_ROBOTIC)
-		user.visible_message("<span class='notice'>[user] starts to fix some of the wires in [H]'s [affecting.getDisplayName()].</span>", "<span class='notice'>You start fixing some of the wires in [H]'s [affecting.getDisplayName()].</span>")
+		user.visible_message("<span class='notice'>[user] starts to fix some of the wires in [H]'s [affecting].</span>", "<span class='notice'>You start fixing some of the wires in [H]'s [affecting].</span>")
 		if(!do_mob(user, H, 50))	return
 		item_heal_robotic(H, user, 0, 5)
 		src.use(1)
@@ -742,10 +761,10 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 	else
 		user << "<span class='notice'>You cannot do that.</span>"
 
-/obj/item/stack/cable_coil/verb/make_restraint(mob/user)
+/obj/item/stack/cable_coil/verb/make_restraint()
 	set name = "Make Cable Restraints"
 	set category = "Object"
-	makeRestraints(user)
+	makeRestraints(usr)
 	..()
 
 /obj/item/stack/cable_coil/AltClick(mob/user)
@@ -987,8 +1006,3 @@ var/global/list/datum/stack_recipe/cable_coil_recipes = list ( \
 /obj/item/stack/cable_coil/white
 	item_color = "white"
 	icon_state = "coil_white"
-
-/obj/item/stack/cable_coil/random/New()
-	item_color = pick("red","yellow","green","blue","pink")
-	icon_state = "coil_[item_color]"
-	..()

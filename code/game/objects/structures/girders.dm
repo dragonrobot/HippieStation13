@@ -13,6 +13,12 @@
 	var/state = GIRDER_NORMAL
 	var/girderpasschance = 20 // percentage chance that a projectile passes through the girder.
 
+/obj/structure/girder/attack_animal(mob/living/simple_animal/user)
+	if(user.environment_smash >= 2)
+		playsound(src, 'sound/effects/meteorimpact.ogg', 50, 1)
+		new /obj/item/stack/sheet/metal(src.loc)
+		qdel(src)
+
 /obj/structure/girder/attackby(obj/item/W, mob/user, params)
 	add_fingerprint(user)
 	if(istype(W, /obj/item/weapon/screwdriver))
@@ -62,15 +68,6 @@
 		user << "<span class='notice'>You start slicing apart the girder...</span>"
 		playsound(src, 'sound/items/Welder.ogg', 100, 1)
 		if(do_after(user, 40/W.toolspeed, target = src))
-			user << "<span class='notice'>You slice apart the girder.</span>"
-			var/obj/item/stack/sheet/metal/M = new (loc, 2)
-			M.add_fingerprint(user)
-			qdel(src)
-
-	else if(istype(W, /obj/item/weapon/melee/energy/sword))
-		user << "<span class='notice'>You start slicing apart the girder...</span>"
-		playsound(src, 'sound/items/Welder.ogg', 100, 1)
-		if(do_after(user, 70, target = src))
 			user << "<span class='notice'>You slice apart the girder.</span>"
 			var/obj/item/stack/sheet/metal/M = new (loc, 2)
 			M.add_fingerprint(user)

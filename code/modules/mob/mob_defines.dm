@@ -6,19 +6,18 @@
 	hud_possible = list(ANTAG_HUD)
 	pressure_resistance = 8
 	var/datum/mind/mind
+	var/list/datum/action/actions = list()
 
 	var/stat = 0 //Whether a mob is alive or dead. TODO: Move this to living - Nodrak
 
-	var/obj/screen/flash = null
-	var/obj/screen/blind = null
 	var/obj/screen/hands = null
 	var/obj/screen/pullin = null
 	var/obj/screen/internals = null
 	var/obj/screen/i_select = null
 	var/obj/screen/m_select = null
 	var/obj/screen/healths = null
+	var/obj/screen/staminas = null
 	var/obj/screen/throw_icon = null
-	var/obj/screen/damageoverlay = null
 	/*A bunch of this stuff really needs to go under their own defines instead of being globally attached to mob.
 	A variable should only be globally attached to turfs/objects/whatever, when it is in fact needed as such.
 	The current method unnecessarily clusters up the variable list, especially for humans (although rearranging won't really clean it up a lot but the difference will be noticable for other mobs).
@@ -158,8 +157,3 @@
 	var/permanent_sight_flags = 0
 
 	var/resize = 1 //Badminnery resize
-
-	var/nearcrit = 0 //for newcrit
-	var/crit_can_crawl = 0 //whether or not the mob can crawl in crit
-	var/crit_crawl_damage = 0 //No damage by default
-	var/crit_crawl_damage_type = OXY

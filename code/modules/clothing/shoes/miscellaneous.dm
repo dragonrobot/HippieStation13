@@ -1,3 +1,15 @@
+
+
+/obj/item/clothing/shoes/baneboots
+    name = "baneboots"
+    desc = "Speak of the devil and he shall appear."
+    icon_state = "baneboots"
+    item_state = "baneboots"
+    armor = list(melee = 10, bullet = 25, laser = 10)
+    strip_delay = 70
+    burn_state = -1
+
+
 /obj/item/clothing/shoes/proc/step_action() //this was made to rewrite clown shoes squeaking
 
 /obj/item/clothing/shoes/suicide_act(mob/user)
@@ -97,6 +109,16 @@
 		footstep = 0
 	else
 		footstep++
+
+/obj/item/clothing/shoes/clown_shoes/cluwne
+	icon_state = "cluwne"
+	item_state = "cluwne"
+	unacidable = 1
+	burn_state = -1
+	flags = NODROP
+
+/obj/item/clothing/shoes/clown_shoes/cluwne/dropped(mob/user)
+	qdel(src)
 
 /obj/item/clothing/shoes/jackboots
 	name = "jackboots"

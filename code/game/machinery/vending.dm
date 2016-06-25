@@ -72,7 +72,7 @@
 		build_inventory(contraband, 1)
 		build_inventory(premium, 0, 1)
 
-	slogan_list = text2list(product_slogans, ";")
+	slogan_list = splittext(product_slogans, ";")
 	// So not all machines speak at the exact same time.
 	// The first time this machine says something will be at slogantime + this random value,
 	// so if slogantime is 10 minutes, it will say it at somewhere between 10 and 20 minutes after the machine is crated.
@@ -681,6 +681,76 @@ IF YOU MODIFY THE PRODUCTS LIST OF A MACHINE, MAKE SURE TO UPDATE ITS RESUPPLY C
 	refill_canister = /obj/item/weapon/vending_refill/snack
 	var/chef_compartment_access = "28"
 
+/obj/machinery/vending/snack/kitchen
+	name = "\improper Kitchen Takeaway Dinner"
+	desc = "A vendo-freezer guaranteed to preserve anything the chef has made edible for up to 72 hours. Unless it was unedible to begin with. "
+	product_slogans = "Best food on the station. You either eat it or don't eat at all!;Fresh and Delicious! (Any attempts to claim otherwise is a Class-D violation. Nanotrasen retains the right to call any food products fresh that has not been Cryo-Frozen for over 100 years.  This includes any and all food products that have not Cyro-Frozen at all."
+	product_ads = "Eat today, die tomorrow.;Contains at least 1% kitchen inspector protein!;One pie a day, keeps the traitor-clown away.;Deepfried and bloated;Healthy choice one time a year!;Is that REAL Meat?;Nutriment & Vitamins, Integrated in edible autoinjector system!"
+	icon_state = "smartfridge"
+	products = list()
+	contraband = list()
+
+/obj/machinery/vending/snack/kitchen/attackby(obj/item/weapon/W, mob/user, params)
+	if(istype(W, /obj/item/weapon/reagent_containers/food/snacks))
+		if(!compartment_access_check(user))
+			return
+		if(junk_check(W))
+			if(!iscompartmentfull(user))
+				if(!user.drop_item())
+					return
+				W.loc = src
+				food_load(W)
+				user << "<span class='notice'>You insert [W] into [src]'s chef compartment.</span>"
+		else
+			user << "<span class='notice'>[src]'s chef compartment does not accept junk food.</span>"
+		return
+
+	if(istype(W, /obj/item/weapon/storage/bag/tray))
+		if(!compartment_access_check(user))
+			return
+		var/obj/item/weapon/storage/T = W
+		var/loaded = 0
+		var/denied_items = 0
+		for(var/obj/item/weapon/reagent_containers/food/snacks/S in T.contents)
+			if(iscompartmentfull(user))
+				break
+			if(junk_check(S))
+				T.remove_from_storage(S, src)
+				food_load(S)
+				loaded++
+			else
+				denied_items++
+		if(denied_items)
+			user << "<span class='notice'>[src] refuses some items.</span>"
+		if(loaded)
+			user << "<span class='notice'>You insert [loaded] dishes into [src]'s chef compartment.</span>"
+		updateUsrDialog()
+		return
+
+/obj/machinery/vending/snack/kitchen/attack_hand(mob/user)
+	var/dat = ""
+	if(stat & (BROKEN|NOPOWER))
+		return
+	dat += "<h3>Chef's Food Selection</h3>"
+	dat += "<div class='statusDisplay'>"
+	for (var/O in dish_quants)
+		if(dish_quants[O] > 0)
+			var/N = dish_quants[O]
+			dat += "<a href='byond://?src=\ref[src];dispense=[sanitize(O)]'>Dispense</A> "
+			dat += "<B>[capitalize(O)]: [N]</B><br>"
+	dat += "</div>"
+
+	//user << browse(dat, "window=vending")
+	//onclose(user, "")
+	var/datum/browser/popup = new(user, "vending", (name))
+	popup.set_content(dat)
+	popup.set_title_image(user.browse_rsc_icon(src.icon, src.icon_state))
+	popup.open()
+
+
+
+
+
 /obj/machinery/vending/sustenance
 	name = "\improper Sustenance Vendor"
 	desc = "A vending machine which vends food, as required by section 47-C of the NT's Prisoner Ethical Treatment Agreement."
@@ -829,7 +899,7 @@ IF YOU MODIFY THE PRODUCTS LIST OF A MACHINE, MAKE SURE TO UPDATE ITS RESUPPLY C
 						/obj/item/seeds/pumpkinseed = 3,/obj/item/seeds/replicapod = 3,/obj/item/seeds/soyaseed = 3,/obj/item/seeds/sunflowerseed = 3,
 						/obj/item/seeds/tea_aspera_seed = 3,/obj/item/seeds/tobacco_seed = 3,/obj/item/seeds/tomatoseed = 3,
 						/obj/item/seeds/towermycelium = 3,/obj/item/seeds/watermelonseed = 3,/obj/item/seeds/wheatseed = 3,/obj/item/seeds/whitebeetseed = 3,
-						/obj/item/seeds/buttseed = 3)
+						/obj/item/seeds/buttseed = 3, /obj/item/seeds/limbseed = 3)
 	contraband = list(/obj/item/seeds/amanitamycelium = 2,/obj/item/seeds/glowshroom = 2,/obj/item/seeds/libertymycelium = 2,/obj/item/seeds/nettleseed = 2,
 						/obj/item/seeds/plumpmycelium = 2,/obj/item/seeds/reishimycelium = 2)
 	premium = list(/obj/item/weapon/reagent_containers/spray/waterflower = 1)
@@ -880,7 +950,7 @@ IF YOU MODIFY THE PRODUCTS LIST OF A MACHINE, MAKE SURE TO UPDATE ITS RESUPPLY C
 					/obj/item/clothing/suit/hooded/carp_costume = 1,
 					/obj/item/clothing/suit/hooded/ian_costume = 1)
 	contraband = list(/obj/item/clothing/suit/judgerobe = 1,/obj/item/clothing/head/powdered_wig = 1,/obj/item/weapon/gun/magic/wand = 2,/obj/item/clothing/glasses/sunglasses/garb = 2)
-	premium = list(/obj/item/clothing/suit/hgpirate = 2, /obj/item/clothing/head/hgpiratecap = 2, /obj/item/clothing/head/helmet/roman = 1, /obj/item/clothing/head/helmet/roman/legionaire = 1, /obj/item/clothing/under/roman = 1, /obj/item/clothing/shoes/roman = 1, /obj/item/weapon/shield/riot/roman = 1, /obj/item/clothing/under/pmc = 1)
+	premium = list(/obj/item/clothing/suit/hgpirate = 2, /obj/item/clothing/head/hgpiratecap = 2, /obj/item/clothing/head/helmet/roman = 1, /obj/item/clothing/head/helmet/roman/legionaire = 1, /obj/item/clothing/under/roman = 1, /obj/item/clothing/shoes/roman = 1, /obj/item/weapon/shield/roman = 1, /obj/item/clothing/under/pmc = 1)
 	refill_canister = /obj/item/weapon/vending_refill/autodrobe
 
 /obj/machinery/vending/dinnerware
@@ -905,7 +975,7 @@ IF YOU MODIFY THE PRODUCTS LIST OF A MACHINE, MAKE SURE TO UPDATE ITS RESUPPLY C
 	icon_state = "tool"
 	icon_deny = "tool-deny"
 //	req_access_txt = "12" //Maint access
-	products = list(/obj/item/stack/cable_coil/random = 10,/obj/item/weapon/crowbar = 5,/obj/item/weapon/weldingtool = 3,/obj/item/weapon/wirecutters = 5,
+	products = list(/obj/item/stack/cable_coil = 10,/obj/item/weapon/crowbar = 5,/obj/item/weapon/weldingtool = 3,/obj/item/weapon/wirecutters = 5,
 					/obj/item/weapon/wrench = 5,/obj/item/device/analyzer = 5,/obj/item/device/t_scanner = 5,/obj/item/weapon/screwdriver = 5)
 	contraband = list(/obj/item/weapon/weldingtool/hugetank = 2,/obj/item/clothing/gloves/color/fyellow = 2)
 	premium = list(/obj/item/clothing/gloves/color/yellow = 2)
@@ -983,6 +1053,7 @@ IF YOU MODIFY THE PRODUCTS LIST OF A MACHINE, MAKE SURE TO UPDATE ITS RESUPPLY C
 	contraband = list(/obj/item/clothing/under/syndicate/tacticool=1,/obj/item/clothing/mask/balaclava=1,/obj/item/clothing/head/ushanka=1,/obj/item/clothing/under/soviet=1,/obj/item/weapon/storage/belt/fannypack/black=2)
 	premium = list(/obj/item/clothing/under/suit_jacket/checkered=1,/obj/item/clothing/head/mailman=1,/obj/item/clothing/under/rank/mailman=1,/obj/item/clothing/suit/jacket/leather=1,/obj/item/clothing/suit/jacket/leather/overcoat=1,/obj/item/clothing/under/pants/mustangjeans=1)
 	refill_canister = /obj/item/weapon/vending_refill/clothing
+
 
 #undef STANDARD_CHARGE
 #undef CONTRABAND_CHARGE

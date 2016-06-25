@@ -35,6 +35,7 @@
 
 	sleep(70)
 	SSshuttle.emergency.request(null, 0.3) // Cannot recall
+	SSshuttle.emergencyNoRecall = 1
 
 
 /obj/singularity/narsie/large/attack_ghost(mob/dead/observer/user as mob)
@@ -139,7 +140,7 @@
 	set background = BACKGROUND_ENABLED
 //	if(defer_powernet_rebuild != 2)
 //		defer_powernet_rebuild = 1
-	for(var/atom/X in orange(consume_range,src))
+	for(var/atom/X in ultra_range(consume_range,src,1))
 		if(isturf(X) || istype(X, /atom/movable))
 			consume(X)
 //	if(defer_powernet_rebuild != 2)

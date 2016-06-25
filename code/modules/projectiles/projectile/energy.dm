@@ -18,9 +18,9 @@
 	hitsound = 'sound/weapons/taserhit.ogg'
 	range = 7
 
-/obj/item/projectile/energy/electrode/on_hit(atom/target, blocked = 0)
+/obj/item/projectile/energy/electrode/on_hit(atom/target, blocked = 0, hit_zone)
 	. = ..()
-	if(!ismob(target) || blocked >= 2) //Fully blocked by mob or collided with dense object - burst into sparks!
+	if(!ismob(target) || blocked >= 100) //Fully blocked by mob or collided with dense object - burst into sparks!
 		var/datum/effect_system/spark_spread/sparks = new /datum/effect_system/spark_spread
 		sparks.set_up(1, 1, src)
 		sparks.start()
@@ -133,6 +133,7 @@
 	nodamage = 0
 	weaken = 5
 	stutter = 5
+	flags = NOSHIELD //Ignores shield to make it actually useful against riot shield dudes
 
 /obj/item/projectile/energy/bolt/large
 	damage = 20

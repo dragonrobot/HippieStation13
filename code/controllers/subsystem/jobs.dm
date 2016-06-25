@@ -81,7 +81,7 @@ var/datum/subsystem/job/SSjob
 		if(!job.player_old_enough(player.client))
 			Debug("FOC player not old enough, Player: [player]")
 			continue
-		if(flag && (!player.client.prefs.be_special & flag))
+		if(flag && (!flag in player.client.prefs.be_special))
 			Debug("FOC flag failed, Player: [player], Flag: [flag], ")
 			continue
 		if(player.mind && job.title in player.mind.restricted_roles)
@@ -236,7 +236,7 @@ var/datum/subsystem/job/SSjob
 	HandleFeedbackGathering()
 
 	for(var/mob/new_player/player in unassigned)
-		if(jobban_isbanned(player, "catban"))
+		if(jobban_isbanned(player, "catban" || jobban_isbanned(player, "cluwneban")))
 			AssignRole(player, "Assistant")
 
 	//People who wants to be assistants, sure, go on.
@@ -398,10 +398,10 @@ var/datum/subsystem/job/SSjob
 /datum/subsystem/job/proc/LoadJobs()
 	var/jobstext = return_file_text("config/jobs.txt")
 	for(var/datum/job/J in occupations)
-		var/regex = "[J.title]=(-1|\\d+),(-1|\\d+)"
-		var/datum/regex/results = regex_find(jobstext, regex)
-		J.total_positions = results.str(2)
-		J.spawn_positions = results.str(3)
+		var/regex/jobs = new("[J.title]=(-1|\\d+),(-1|\\d+)")
+		jobs.Find(jobstext)
+		J.total_positions = text2num(jobs.group[1])
+		J.spawn_positions = text2num(jobs.group[2])
 
 /datum/subsystem/job/proc/HandleFeedbackGathering()
 	for(var/datum/job/job in occupations)

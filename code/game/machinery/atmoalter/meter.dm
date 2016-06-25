@@ -59,7 +59,7 @@
 		icon_state = "meter4"
 
 	if(frequency)
-		var/datum/radio_frequency/radio_connection = SSradio.return_frequency(frequency)
+		var/datum/radio_frequency/radio_connection = radio_controller.return_frequency(frequency)
 
 		if(!radio_connection) return
 
@@ -102,8 +102,8 @@
 				"<span class='italics'>You hear ratchet.</span>")
 			new /obj/item/pipe_meter(src.loc)
 			qdel(src)
-		return
-	..()
+	else
+		..()
 
 /obj/machinery/meter/attack_ai(mob/user)
 	return src.attack_hand(user)

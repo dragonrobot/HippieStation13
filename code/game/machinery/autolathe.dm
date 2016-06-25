@@ -26,7 +26,7 @@
 	var/datum/wires/autolathe/wires = null
 
 	var/datum/design/being_built
-	var/datum/research/files
+	var/datum/research/files = /datum/research/autolathe
 	var/list/datum/design/matching_designs
 	var/selected_category
 	var/screen = 1
@@ -47,6 +47,7 @@
 							"Security",
 							"Machinery",
 							"Medical",
+							"Assembly",
 							"Misc"
 							)
 
@@ -63,7 +64,7 @@
 	RefreshParts()
 
 	wires = new(src)
-	files = new /datum/research/autolathe(src)
+	files = new files(src)
 	matching_designs = list()
 
 /obj/machinery/autolathe/Destroy()
@@ -179,15 +180,19 @@
 			if(!being_built)
 				return
 
-			//multiplier checks : only stacks can have one and its value is 1, 10 ,25 or max_multiplier
-			var/multiplier = text2num(href_list["multiplier"])
-			var/max_multiplier = min(50, being_built.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/being_built.materials[MAT_METAL]):INFINITY,being_built.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/being_built.materials[MAT_GLASS]):INFINITY)
 			var/is_stack = ispath(being_built.build_path, /obj/item/stack)
+			var/max_multiplier = min(   50-38*!is_stack, //We're making the max_multiplier up to 12 for non-stacks because who the fuck would want 50 bonesaws?!
+										being_built.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/being_built.materials[MAT_METAL]):INFINITY,
+										being_built.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/being_built.materials[MAT_GLASS]):INFINITY)
 
-			if(!is_stack && (multiplier > 1))
-				return
-			if (!(multiplier in list(1,10,25,max_multiplier))) //"enough materials ?" is checked further down
-				return
+			var/multiplier = href_list["multiplier"] //Not converting it immediately because we wanna check if it's custom or not.
+			if (multiplier == "custom")
+				multiplier =  min(max( 0,round(input("How many of these would you like to build? (Up to [max_multiplier])")  as num) ),max_multiplier)
+				if(busy || multiplier <= 0)  //The first arg is in case others use the lathe while you're using it.
+					usr << "<span class='warning'>Lathe is either busy or invalid input.</span>"
+					return
+			else
+				multiplier = text2num(href_list["multiplier"])
 			/////////////////
 
 			var/coeff = (is_stack ? 1 : 2 ** prod_coeff) //stacks are unaffected by production coefficient
@@ -196,11 +201,12 @@
 
 			var/power = max(2000, (metal_cost+glass_cost)*multiplier/5)
 
+			//If we have enough materials (multiplier and coeff accounted for)
 			if((materials.amount(MAT_METAL) >= metal_cost*multiplier/coeff) && (materials.amount(MAT_GLASS) >= glass_cost*multiplier/coeff))
 				busy = 1
 				use_power(power)
 				flick(making,src)
-				spawn(32/coeff)
+				spawn(is_stack*32/coeff + !is_stack*32*multiplier/coeff)
 					use_power(power)
 					if(is_stack)
 						var/list/materials_used = list(MAT_METAL=metal_cost*multiplier, MAT_GLASS=glass_cost*multiplier)
@@ -228,15 +234,18 @@
 							N.amount = multiplier
 							N.update_icon()
 					else
-						var/list/materials_used = list(MAT_METAL=metal_cost/coeff, MAT_GLASS=glass_cost/coeff)
-						materials.use_amount(materials_used)
-						var/obj/item/new_item
-						if(ispath(being_built.build_path, /obj/structure)) // if we're making a structure, make an object-in-a-box item that dispenses said structure on use, or everything runtimes
-							new_item = new /obj/item/device/object_in_a_box(T, being_built.build_path)
-						else
-							new_item = new being_built.build_path(T)
-						new_item.autolathe_crafted(src)
-						new_item.materials = materials_used.Copy()
+						var/list/materials_used // Declaring it out here so we don't have to declare it every single time in the loop.
+						for(var/i = 0, i<multiplier, i++)
+							materials_used = list(MAT_METAL=metal_cost/coeff, MAT_GLASS=glass_cost/coeff)
+							materials.use_amount(materials_used)
+
+							var/obj/item/new_item
+							if(ispath(being_built.build_path, /obj/structure)) // if we're making a structure, make an object-in-a-box item that dispenses said structure on use, or everything runtimes
+								new_item = new /obj/item/device/object_in_a_box(T, being_built.build_path)
+							else
+								new_item = new being_built.build_path(T)
+							new_item.autolathe_crafted(src)
+							new_item.materials = materials_used.Copy()
 					busy = 0
 					src.updateUsrDialog()
 
@@ -246,10 +255,19 @@
 			for(var/datum/design/D in files.known_designs)
 				if(findtext(D.name,href_list["to_search"]))
 					matching_designs.Add(D)
+
+		if(href_list["remove_mat"] && href_list["material"])
+			var/amount = text2num(href_list["remove_mat"])
+			var/material = href_list["material"]
+			amount = round(amount, 1)
+			if(amount <= 0 || amount > materials.amount(material)) //href protection
+				return
+
+			materials.retrieve_sheets(amount, material)
 	else
 		usr << "<span class=\"alert\">The autolathe is busy. Please wait for completion of previous operation.</span>"
 
-	src.updateUsrDialog()
+	updateUsrDialog()
 
 	return
 
@@ -266,8 +284,7 @@
 /obj/machinery/autolathe/proc/main_win(mob/user)
 	var/dat = "<div class='statusDisplay'><h3>Autolathe Menu:</h3><br>"
 	dat += "<b>Total amount:</b> [materials.total_amount] / [materials.max_amount] cm<sup>3</sup><br>"
-	dat += "<b>Metal amount:</b> [materials.amount(MAT_METAL)] cm<sup>3</sup><br>"
-	dat += "<b>Glass amount:</b> [materials.amount(MAT_GLASS)] cm<sup>3</sup><br>"
+	dat += output_available_resources() + "<br>"
 
 	dat += "<form name='search' action='?src=\ref[src]'>\
 	<input type='hidden' name='src' value='\ref[src]'>\
@@ -307,14 +324,23 @@
 		else
 			dat += "<a href='?src=\ref[src];make=[D.id];multiplier=1'>[D.name]</a>"
 
+		var/max_multiplier = min(50,
+									D.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/D.materials[MAT_METAL]):INFINITY,
+									D.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/D.materials[MAT_GLASS]):INFINITY)
 		if(ispath(D.build_path, /obj/item/stack))
-			var/max_multiplier = min(50, D.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/D.materials[MAT_METAL]):INFINITY,D.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/D.materials[MAT_GLASS]):INFINITY)
-			if (max_multiplier>10 && !disabled)
+			if (max_multiplier>=10 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=10'>x10</a>"
-			if (max_multiplier>25 && !disabled)
+			if (max_multiplier>=25 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=25'>x25</a>"
 			if(max_multiplier > 0 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=[max_multiplier]'>x[max_multiplier]</a>"
+		else
+			if (max_multiplier>=3 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=3'>x3</a>"
+			if (max_multiplier>=5 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=5'>x5</a>"
+			if(max_multiplier > 0 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=custom'>Set</a>"
 
 		dat += "[get_design_cost(D)]<br>"
 
@@ -334,14 +360,23 @@
 		else
 			dat += "<a href='?src=\ref[src];make=[D.id];multiplier=1'>[D.name]</a>"
 
+		var/max_multiplier = min(50,
+									D.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/D.materials[MAT_METAL]):INFINITY,
+									D.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/D.materials[MAT_GLASS]):INFINITY)
 		if(ispath(D.build_path, /obj/item/stack))
-			var/max_multiplier = min(50, D.materials[MAT_METAL] ?round(materials.amount(MAT_METAL)/D.materials[MAT_METAL]):INFINITY,D.materials[MAT_GLASS]?round(materials.amount(MAT_GLASS)/D.materials[MAT_GLASS]):INFINITY)
-			if (max_multiplier>10 && !disabled)
+			if (max_multiplier>=10 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=10'>x10</a>"
-			if (max_multiplier>25 && !disabled)
+			if (max_multiplier>=25 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=25'>x25</a>"
 			if(max_multiplier > 0 && !disabled)
 				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=[max_multiplier]'>x[max_multiplier]</a>"
+		else
+			if (max_multiplier>=3 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=3'>x3</a>"
+			if (max_multiplier>=5 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=5'>x5</a>"
+			if(max_multiplier > 0 && !disabled)
+				dat += " <a href='?src=\ref[src];make=[D.id];multiplier=custom'>Set</a>"
 
 		dat += "[get_design_cost(D)]<br>"
 
@@ -391,6 +426,16 @@
 			if("hacked" in D.category)
 				files.known_designs -= D
 
+/obj/machinery/autolathe/proc/output_available_resources()
+	var/output
+	for(var/resource in materials.materials)
+		var/amount = materials.amount(resource)
+		output += "<span class=\"res_name\">[capitalize(materials.material2name(resource))]: </span>[amount] cm&sup3;"
+		if(amount>0)
+			output += "<span style='font-size:80%;'>- Remove \[<a href='?src=\ref[src];remove_mat=1;material=[resource]'>1</a>\] | \[<a href='?src=\ref[src];remove_mat=10;material=[resource]'>10</a>\] | \[<a href='?src=\ref[src];remove_mat=50;material=[resource]'>All</a>\]</span>"
+		output += "<br/>"
+	return output
+
 /obj/machinery/autolathe/atmos
 	name = "atmospheric fabricator"
 	desc = "It produces atmospheric related items using metal and glass."
@@ -402,3 +447,4 @@
 	maintpanel = "mechfabt"
 	categories = list("Atmos")
 	board = /obj/item/weapon/circuitboard/atmoslathe
+	files = /datum/research/autolathe/atmoslathe

@@ -9,6 +9,12 @@
 	else if(is_shadow(usr)) usr << "<span class='warning'>Your telepathic ability is suppressed. Hatch or use Rapid Re-Hatch first.</span>"
 	return 0
 
+/obj/effect/proc_holder/spell/proc/jaunt_check(var/mob/living/carbon/human/H)
+	if(H.incorporeal_move == 1)
+		return 1
+	else
+		return 0
+
 
 /obj/effect/proc_holder/spell/targeted/glare //Stuns and mutes a human target for 10 seconds
 	name = "Glare"
@@ -28,6 +34,10 @@
 		if(!shadowling_check(user))
 			revert_cast()
 			return
+		if(jaunt_check(user))
+			revert_cast()
+			usr << "<span class='warning'>You can't use this spell in the space between dimensions!</span>"
+			return
 		if(target.stat)
 			user << "<span class='warning'>[target] must be conscious!</span>"
 			revert_cast()
@@ -38,6 +48,8 @@
 			return
 		var/mob/living/carbon/human/M = target
 		user.visible_message("<span class='warning'><b>[user]'s eyes flash a blinding red!</b></span>")
+		if((target.disabilities & BLIND) || target.eye_blind)
+			return
 		target.visible_message("<span class='danger'>[target] freezes in place, their eyes glazing over...</span>")
 		if(in_range(target, user))
 			target << "<span class='userdanger'>Your gaze is forcibly drawn into [user]'s eyes, and you are mesmerized by the heavenly lights...</span>"
@@ -108,7 +120,7 @@
 	name = "Shadow Walk"
 	desc = "Phases you into the space between worlds for a short time, allowing movement through walls and invisbility."
 	panel = "Shadowling Abilities"
-	charge_max = 300 //Used to be twice this, buffed
+	charge_max = 450
 	human_req = 1
 	clothes_req = 0
 	action_icon_state = "shadow_walk"
@@ -118,9 +130,10 @@
 	if(!shadowling_check(user))
 		revert_cast()
 		return
+	if(usr.stunned)
+		revert_cast()
+		return
 	user.visible_message("<span class='warning'>[user] vanishes in a puff of black mist!</span>", "<span class='shadowling'>You enter the space between worlds as a tunnel.</span>")
-	user.SetStunned(0)
-	user.SetWeakened(0)
 	user.incorporeal_move = 1
 	user.alpha = 0
 	if(user.buckled)
@@ -129,8 +142,7 @@
 	user.visible_message("<span class='warning'>[user] suddenly manifests!</span>", "<span class='shadowling'>The rift's pressure forces you back to corporeality.</span>")
 	user.incorporeal_move = 0
 	user.alpha = 255
-
-
+	
 /obj/effect/proc_holder/spell/aoe_turf/flashfreeze //Stuns and freezes nearby people - a bit more effective than a changeling's cryosting
 	name = "Icy Veins"
 	desc = "Instantly freezes the blood of nearby people, stunning them and causing burn damage."
@@ -145,6 +157,10 @@
 /obj/effect/proc_holder/spell/aoe_turf/flashfreeze/cast(list/targets,mob/user = usr)
 	if(!shadowling_check(user))
 		revert_cast()
+		return
+	if(jaunt_check(user))
+		revert_cast()
+		usr << "<span class='warning'>You can't use this spell in the space between dimensions!</span>"
 		return
 	user << "<span class='shadowling'>You freeze the nearby air.</span>"
 	for(var/turf/T in targets)
@@ -179,6 +195,7 @@
 	listclearnulls(ticker.mode.thralls)
 	if(!(user.mind in ticker.mode.shadows)) return
 	if(jobban_isbanned(usr, "catban")) return
+	if(jobban_isbanned(usr, "cluwneban")) return
 	if(user.dna.species.id != "shadowling")
 		if(ticker.mode.thralls.len >= 5)
 			revert_cast()
@@ -422,7 +439,7 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 			M.Stun(3)
 	else
 		M << "<span class='notice'><b>You breathe in the black smoke, and you feel revitalized!</b></span>"
-		M.heal_organ_damage(2,2)
+		M.heal_organ_damage(2,2,0.5)
 		M.adjustOxyLoss(-2)
 		M.adjustToxLoss(-2)
 	..()
@@ -443,6 +460,10 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 /obj/effect/proc_holder/spell/aoe_turf/unearthly_screech/cast(list/targets,mob/user = usr)
 	if(!shadowling_check(user))
 		revert_cast()
+		return
+	if(jaunt_check(user))
+		revert_cast()
+		usr << "<span class='warning'>You can't use this spell in the space between dimensions!</span>"
 		return
 	user.audible_message("<span class='warning'><b>[user] lets out a horrible scream!</b></span>")
 	for(var/turf/T in targets)
@@ -498,7 +519,7 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 		user << "<span class='warning'>There were no nearby humans for you to drain.</span>"
 		return
 	for(var/mob/living/carbon/M in nearbyTargets)
-		user.heal_organ_damage(10, 10)
+		user.heal_organ_damage(10, 10, 1)
 		user.adjustToxLoss(-10)
 		user.adjustOxyLoss(-10)
 		user.adjustStaminaLoss(-20)
@@ -605,6 +626,7 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 				return
 
 
+/*
 /obj/effect/proc_holder/spell/targeted/shadowling_extend_shuttle
 	name = "Destroy Engines"
 	desc = "Extends the time of the emergency shuttle's arrival by fifteen minutes. This can only be used once."
@@ -652,6 +674,8 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 			SSshuttle.emergency.setTimer(timer)
 		user.mind.spell_list.Remove(src) //Can only be used once!
 		qdel(src)
+		
+		*/
 
 
 // THRALL ABILITIES BEYOND THIS POINT //
@@ -659,7 +683,7 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 
 /obj/effect/proc_holder/spell/targeted/lesser_glare //Thrall version of Glare - same effects but for 5 seconds
 	name = "Lesser Glare"
-	desc = "Stuns and mutes a target for a short duration."
+	desc = "Stuns and mutes a target for a short duration. It is useless against eye protection."
 	panel = "Thrall Abilities"
 	charge_max = 450
 	human_req = 1
@@ -680,8 +704,14 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 			user << "<span class='warning'>You cannot glare at allies!</span>"
 			revert_cast()
 			return
+		if(target.check_eye_prot() > 0)
+			user << "<span class='warning'>You can't get a direct gaze on [target]'s eyes!</span>"
+			revert_cast()
+			return
 		var/mob/living/carbon/human/M = target
 		user.visible_message("<span class='warning'><b>[user]'s eyes flash a bright red!</b></span>")
+		if((target.disabilities & BLIND) || target.eye_blind)
+			return
 		target.visible_message("<span class='danger'>[target] freezes in place, their eyes clouding...</span>")
 		if(in_range(target, user))
 			target << "<span class='userdanger'>Your gaze is forcibly drawn into [user]'s eyes, and you are starstruck by the heavenly lights...</span>"
@@ -722,13 +752,12 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 	active = !active
 	if(active)
 		user << "<span class='notice'>You shift the nerves in your eyes, allowing you to see in the dark.</span>"
-		user.see_in_dark = 8
 		user.dna.species.invis_sight = SEE_INVISIBLE_MINIMUM
+		user.see_in_dark = 8
 	else
 		user << "<span class='notice'>You return your vision to normal.</span>"
-		user.see_in_dark = 0
 		user.dna.species.invis_sight = initial(user.dna.species.invis_sight)
-
+		user.see_in_dark = initial(user.see_in_dark)
 
 /obj/effect/proc_holder/spell/self/lesser_shadowling_hivemind //Lets a thrall talk with their allies
 	name = "Lesser Commune"
@@ -833,18 +862,18 @@ datum/reagent/shadowling_blindness_smoke //Reagent used for above spell
 	action_icon_state = "shadow_walk"
 
 /obj/effect/proc_holder/spell/self/shadowling_phase_shift/cast(list/targets,mob/living/simple_animal/ascendant_shadowling/user = usr)
-	for(user in targets)
-		user.phasing = !user.phasing
-		if(user.phasing)
-			user.visible_message("<span class='danger'>[user] suddenly vanishes!</span>", \
-			"<span class='shadowling'>You begin phasing through planes of existence. Use the ability again to return.</span>")
-			user.incorporeal_move = 1
-			user.alpha = 0
-		else
-			user.visible_message("<span class='danger'>[user] suddenly appears from nowhere!</span>", \
-			"<span class='shadowling'>You return from the space between worlds.</span>")
-			user.incorporeal_move = 0
-			user.alpha = 255
+	if(!user.phasing)
+		user.visible_message("<span class='danger'>[user] suddenly vanishes!</span>", \
+		"<span class='shadowling'>You begin phasing through planes of existence. Use the ability again to return.</span>")
+		user.incorporeal_move = 1
+		user.alpha = 0
+		user.phasing = 1
+	else
+		user.visible_message("<span class='danger'>[user] suddenly appears from nowhere!</span>", \
+		"<span class='shadowling'>You return from the space between worlds.</span>")
+		user.incorporeal_move = 0
+		user.alpha = 255
+		user.phasing = 0
 
 
 /obj/effect/proc_holder/spell/aoe_turf/ascendant_storm //Releases bolts of lightning to everyone nearby

@@ -77,11 +77,21 @@
 	time = 16
 
 /datum/surgery_step/insert_pill/preop(mob/user, mob/living/carbon/target, target_zone, obj/item/tool, datum/surgery/surgery)
-	user.visible_message("[user] begins to wedge \the [tool] in [target]'s [parse_zone(target_zone)].", "<span class='notice'>You begin to wedge [tool] in [target]'s [parse_zone(target_zone)]...</span>")
+	if(tool.type == /obj/item/weapon/reagent_containers/pill)
+		user.visible_message("[user] begins to wedge \the [tool] in [target]'s [parse_zone(target_zone)].", "<span class='notice'>You begin to wedge [tool] in [target]'s [parse_zone(target_zone)]...</span>")
+		return 1
+	else
+		user << "<span class='warning'>You cannot insert the [tool] into " + (user == target ? "your" : "[target]'s") + " tooth!<span>"
+		return -1
 
 /datum/surgery_step/insert_pill/success(mob/user, mob/living/carbon/target, target_zone, var/obj/item/weapon/reagent_containers/pill/tool, datum/surgery/surgery)
 	if(!istype(tool))
 		return 0
+
+	if(ishuman(target))
+		var/mob/living/carbon/human/H = target
+		var/obj/item/organ/limb/head/organ = locate(/obj/item/organ/limb/head) in H.organs
+		organ.dentals += tool
 
 	user.drop_item()
 	target.internal_organs += tool
@@ -99,12 +109,17 @@
 	name = "Activate Pill"
 
 /datum/action/item_action/hands_free/activate_pill/Trigger()
-	if(CheckRemoval(owner))
+	if(..() || CheckRemoval(owner))
 		return 0
 	owner << "<span class='caution'>You grit your teeth and burst the implanted [target]!</span>"
 	add_logs(owner, null, "swallowed an implanted pill", target)
 	if(target.reagents.total_volume)
 		target.reagents.reaction(owner, INGEST)
 		target.reagents.trans_to(owner, target.reagents.total_volume)
+
+		if(ishuman(owner))
+			var/mob/living/carbon/human/H = owner
+			var/obj/item/organ/limb/head/organ = locate(/obj/item/organ/limb/head) in H.organs
+			organ.dentals -= target
 	qdel(target)
 	return 1

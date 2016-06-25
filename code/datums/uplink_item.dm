@@ -135,6 +135,14 @@ var/list/uplink_items = list()
 	cost = 4
 	jobs = list("Chemist", "Medical Doctor", "Chief Medical Officer", "Geneticist", "Virologist", "Research Director", "Scientist", "Roboticist") //all the labcoat jobs
 
+//MEDICAL
+/datum/uplink_item/job_specific/voodoo
+	name = "Voodoo Doll"
+	desc = "An artifact provided by the Wizard Federation, it allows you to attach any item to it and manipulate anyone who has ever touched said item, be it from moving them around, making them say stuff and stabbing them with objects. The Wizard Federation has notified us that the victim will be made alert of the user's general location if used too aggresively."
+	item = /obj/item/weapon/storage/box/syndie_kit/voodoo
+	cost = 10
+	jobs = list("Chemist", "Medical Doctor", "Chief Medical Officer", "Geneticist", "Virologist")
+
 //SERVICE DIVISION
 
 /datum/uplink_item/job_specific/chainsaw
@@ -182,6 +190,13 @@ var/list/uplink_items = list()
 	item = /obj/item/weapon/storage/box/syndie_kit/caneshotgun
 	cost = 15
 	jobs = list("Clown","Mime")
+//CLOWN
+/datum/uplink_item/job_specific/honkrender
+	name = "Honk Render"
+	desc = "A blade capable of tearing apart the fabric of reality and summoning several clowns from the Clown Planet itself. They're mostly passive, until someone hits one of them, after which they enter a frenzy, attacking any and all in a collective group effort. The blade itself is also useful as a slashing weapon."
+	item = /obj/item/weapon/veilrender/honkrender
+	cost = 7
+	jobs = list("Clown")
 
 //equipment room access
 
@@ -459,11 +474,17 @@ var/list/uplink_items = list()
 	item = /obj/item/clothing/gloves/cqc
 	cost = 12
 
+/datum/uplink_item/dangerous/wrestling
+	name = "Wrestling Belt"
+	desc = "A powerful wrestling moveset given to you via championship belt."
+	item = /obj/item/weapon/storage/belt/champion/wrestling
+	cost = 12
+
 /datum/uplink_item/dangerous/reinforcement
 	name = "Reinforcements"
-	desc = "Call in an additional team member. They won't come with any gear, so you'll have to save some telecrystals to arm them as well."
+	desc = "Call in an additional team member. They come with predefined gear sets, but you might want to save some telecrystals to arm them better."
 	item = /obj/item/weapon/antag_spawner/nuke_ops
-	cost = 25
+	cost = 35
 	gamemodes = list(/datum/game_mode/nuclear)
 	surplus = 0
 
@@ -761,6 +782,12 @@ var/list/uplink_items = list()
 	item = /obj/item/toy/carpplushie/dehy_carp
 	cost = 2
 
+/datum/uplink_item/stealthy_weapons/trick_pin
+	name = "Trick firing pin"
+	desc = "A firing pin that will cause the gun it is put into to explode the next time it is used. Slot it into any firearm to set it up."
+	item = /obj/item/device/firing_pin/trick
+	cost = 3
+
 /datum/uplink_item/stealthy_weapons/door_charge
 	name = "Explosive Airlock Charge"
 	desc = "A small, easily concealable device. It can be applied to an open airlock panel, and the next person to open that airlock will be knocked down in an explosion. The airlock's maintenance panel will also be destroyed by this."
@@ -800,6 +827,12 @@ var/list/uplink_items = list()
 	In addition, they can be forged to display a new assignment and name. This can be done an unlimited amount of times. Some Syndicate areas can only be accessed with these cards."
 	item = /obj/item/weapon/card/id/syndicate
 	cost = 2
+
+/datum/uplink_item/stealthy_tools/pickpocket_gloves
+	name = "Pickpocket Gloves"
+	desc = "Gloves that allow you to quickly and stealthily remove items from people and puts them straight into your hands."
+	item = /obj/item/clothing/gloves/pickpocket
+	cost = 4
 
 /datum/uplink_item/stealthy_tools/voice_changer
 	name = "Voice Changer"
@@ -1010,7 +1043,7 @@ var/list/uplink_items = list()
 /datum/uplink_item/device_tools/shield
 	name = "Energy Shield"
 	desc = "An incredibly useful personal shield projector, capable of reflecting energy projectiles and defending against other attacks."
-	item = /obj/item/weapon/shield/energy
+	item = /obj/item/weapon/shield/deployable/energy
 	cost = 16
 	gamemodes = list(/datum/game_mode/nuclear,/datum/game_mode/gang)
 	surplus = 20
@@ -1061,6 +1094,19 @@ var/list/uplink_items = list()
 	cost = 2
 	surplus = 30
 
+/datum/uplink_item/implants/mindslave
+	name = "Mindslave Implant"
+	desc = "An implant injected into another body, forcing the victim to obey any command by the user for around 15 to 20 mintues."
+	excludefrom = list(/datum/game_mode/nuclear)
+	item = /obj/item/weapon/storage/box/syndie_kit/imp_mindslave
+	cost = 9
+	surplus = 20
+
+/datum/uplink_item/implants/greatermindslave
+	name = "Greater Mindslave Implant"
+	desc = "An implant injected into another body, forcing the victim to obey any command by the user, it does not expire like a regular mindslave implant."
+	item = /obj/item/weapon/storage/box/syndie_kit/imp_gmindslave
+	cost = 16
 
 //CYBERNETIC IMPLANTS
 
@@ -1093,9 +1139,15 @@ var/list/uplink_items = list()
 	item = /obj/item/organ/internal/cyberimp/chest/reviver
 	cost = 8
 
+/datum/uplink_item/cyber_implants/autoimplanter
+	name = "Autoimplanter"
+	desc = "A device that automatically injects a cyber-implant into the user without the hassle of extensive surgery. It has a slot to insert implants and a screwdriver slot for removing accidentally added implants."
+	item = /obj/item/device/autoimplanter
+	cost = 4
+
 /datum/uplink_item/cyber_implants/bundle
 	name = "Cybernetic Implants Bundle"
-	desc = "A random selection of cybernetic implants. Guaranteed 5 high quality implants. They must be implanted via surgery."
+	desc = "A random selection of cybernetic implants. Guaranteed 5 high quality implants. They come with an autoimplanter to implant them for you!"
 	item = /obj/item/weapon/storage/box/cyber_implants
 	cost = 40
 

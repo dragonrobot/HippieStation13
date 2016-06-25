@@ -266,9 +266,9 @@ var/list/all_supply_groups = list(supply_emergency,supply_security,supply_engine
 
 /datum/supply_packs/security/armory/riotshields
 	name = "Riot Shields Crate"
-	contains = list(/obj/item/weapon/shield/riot,
-					/obj/item/weapon/shield/riot,
-					/obj/item/weapon/shield/riot)
+	contains = list(/obj/item/weapon/shield/deployable/riot,
+					/obj/item/weapon/shield/deployable/riot,
+					/obj/item/weapon/shield/deployable/riot)
 	cost = 20
 	containername = "riot shields crate"
 
@@ -535,6 +535,28 @@ var/list/all_supply_groups = list(supply_emergency,supply_security,supply_engine
 					/obj/structure/particle_accelerator/end_cap)
 	cost = 25
 	containername = "particle accelerator crate"
+
+/datum/supply_packs/engineering/engine/tesla_gen
+	name = "Tesla Generator Crate"
+	contains = list(/obj/machinery/the_singularitygen/tesla)
+	cost = 10
+	containername = "tesla generator crate"
+
+/datum/supply_packs/engineering/engine/tesla_coil
+	name = "Tesla Coil Crate"
+	contains = list(/obj/machinery/power/tesla_coil,
+					/obj/machinery/power/tesla_coil,
+					/obj/machinery/power/tesla_coil,
+					/obj/machinery/power/tesla_coil)
+	cost = 15
+	containername = "tesla coil crate"
+
+/datum/supply_packs/engineering/engine/grnd_rod
+	name = "Grounding Rod Crate"
+	contains = list(/obj/machinery/power/grounding_rod,
+					/obj/machinery/power/grounding_rod)
+	cost = 20
+	containername = "grounding rod crate"
 
 /datum/supply_packs/engineering/engine/spacesuit
 	name = "Space Suit Crate"

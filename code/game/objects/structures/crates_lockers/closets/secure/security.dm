@@ -21,9 +21,11 @@
 	new /obj/item/clothing/shoes/sneakers/brown(src)
 	new /obj/item/device/radio/headset/heads/captain/alt(src)
 	new /obj/item/clothing/glasses/sunglasses/gar/supergar(src)
+	new /obj/item/clothing/glasses/hud/security/sunglasses(src)
 	new /obj/item/clothing/gloves/color/captain(src)
 	new /obj/item/weapon/gun/energy/gun(src)
 	new /obj/item/weapon/storage/daki(src)
+
 /obj/structure/closet/secure_closet/hop
 	name = "\proper head of personnel's locker"
 	req_access = list(access_hop)
@@ -61,7 +63,7 @@
 	new /obj/item/clothing/suit/armor/vest/leather(src)
 	new /obj/item/clothing/suit/armor/hos(src)
 	new /obj/item/clothing/under/rank/head_of_security/alt(src)
-	new /obj/item/clothing/head/HoS(src)
+	new /obj/item/clothing/head/HoS/beret(src)
 	new /obj/item/clothing/glasses/hud/security/sunglasses/eyepatch(src)
 	new /obj/item/clothing/glasses/hud/security/sunglasses/gars/supergars(src)
 	new /obj/item/weapon/storage/lockbox/loyalty(src)
@@ -69,7 +71,7 @@
 	new /obj/item/device/megaphone/sec(src)
 	new /obj/item/tapeproj/security(src)
 	new /obj/item/clothing/mask/gas/sechailer/swat(src)
-	new /obj/item/weapon/shield/riot/tele(src)
+	new /obj/item/weapon/shield/deployable/tele(src)
 	new /obj/item/weapon/melee/baton/loaded(src)
 	new /obj/item/weapon/storage/belt/security/full(src)
 	new /obj/item/weapon/gun/energy/gun/hos(src)
@@ -163,7 +165,7 @@
 	new /obj/item/clothing/under/rank/det/grey(src)
 	new /obj/item/clothing/tie/waistcoat(src)
 	new /obj/item/clothing/suit/det_suit/grey(src)
-	new /obj/item/clothing/head/fedora(src)
+	new /obj/item/clothing/head/fedora/detective/alt(src)
 	new /obj/item/clothing/shoes/laceup(src)
 	new /obj/item/weapon/storage/box/evidence(src)
 	new /obj/item/device/radio/headset/headset_sec/alt(src)

@@ -22,6 +22,7 @@
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	force = 7
+	stamina_percentage = 0.35 //Big metal wrench, yeowch.
 	throwforce = 10
 	w_class = 2
 	materials = list(MAT_METAL=150)
@@ -31,7 +32,7 @@
 	toolspeed = 1
 
 /obj/item/weapon/wrench/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is beating \himself to death with the [src.name]! It looks like \he's trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is beating \himself to death with the [name]! It looks like \he's trying to commit suicide.</span>")
 	playsound(loc, hitsound, 50, 1, -1)
 	return (BRUTELOSS)
 
@@ -56,8 +57,8 @@
 	toolspeed = 1
 
 /obj/item/weapon/screwdriver/suicide_act(mob/user) //TODO: Make this suicide less lame
-	user.visible_message(pick("<span class='suicide'>[user] is stabbing the [src.name] into \his temple! It looks like \he's trying to commit suicide.</span>", \
-						"<span class='suicide'>[user] is stabbing the [src.name] into \his heart! It looks like \he's trying to commit suicide.</span>"))
+	user.visible_message(pick("<span class='suicide'>[user] is stabbing the [name] into \his temple! It looks like \he's trying to commit suicide.</span>", \
+						"<span class='suicide'>[user] is stabbing the [name] into \his heart! It looks like \he's trying to commit suicide.</span>"))
 	playsound(loc, hitsound, 50, 1, -1)
 	return(BRUTELOSS)
 
@@ -89,10 +90,10 @@
 			item_state = "screwdriver_yellow"
 
 	if (prob(75))
-		src.pixel_y = rand(0, 16)
+		pixel_y = rand(0, 16)
 	return
 
-/obj/item/weapon/screwdriver/attack(mob/living/carbon/M, mob/living/carbon/user)
+/obj/item/weapon/screwdriver/attack(mob/living/carbon/M, mob/living/carbon/user, def_zone)
 	if(!istype(M))	return ..()
 	if(user.zone_sel.selecting != "eyes" && user.zone_sel.selecting != "head")
 		return ..()
@@ -126,32 +127,41 @@
 		icon_state = "cutters-y"
 		item_state = "cutters_yellow"
 
-/obj/item/weapon/wirecutters/attack(mob/living/carbon/C, mob/user)
+/obj/item/weapon/wirecutters/attack(mob/living/carbon/C, mob/living/user, def_zone)
 	if(ishuman(C) && user.zone_sel.selecting == "mouth")
 		var/mob/living/carbon/human/H = C
 		var/obj/item/organ/limb/head/O = locate() in H.organs
 		if(!O || !O.get_teeth())
 			user << "<span class='notice'>[H] doesn't have any teeth left!</span>"
 			return
-		H.visible_message("<span class='danger'>[user] tries to tear off [H]'s tooth with [src]!</span>",
-							"<span class='userdanger'>[user] tries to tear off your tooth with [src]!</span>")
-		if(do_after(user, 50, target = H))
-			if(!O || !O.get_teeth()) return
-			var/obj/item/stack/teeth/E = pick(O.teeth_list)
-			if(!E || E.zero_amount()) return
-			var/obj/item/stack/teeth/T = new E.type(H.loc, 1)
-			T.copy_evidences(E)
-			E.use(1)
-			T.add_blood(H)
-			E.zero_amount() //Try to delete the teeth
-			add_logs(user, H, "torn out the tooth from", src)
-			H.visible_message("<span class='danger'>[user] tears off [H]'s tooth with [src]!</span>",
-							"<span class='userdanger'>[user] tears off your tooth with [src]!</span>")
-			var/armor = H.run_armor_check(O, "melee")
-			H.apply_damage(rand(1,5), BRUTE, O, armor)
-			playsound(H, 'sound/misc/tear.ogg', 40, 1, -1) //RIP AND TEAR. RIP AND TEAR.
-			H.emote("scream")
+		if(!user.doing_something)
+			user.doing_something = 1
+			H.visible_message("<span class='danger'>[user] tries to tear off [H]'s tooth with [src]!</span>",
+								"<span class='userdanger'>[user] tries to tear off your tooth with [src]!</span>")
+			if(do_after(user, 50, target = H))
+				if(!O || !O.get_teeth()) return
+				var/obj/item/stack/teeth/E = pick(O.teeth_list)
+				if(!E || E.zero_amount()) return
+				var/obj/item/stack/teeth/T = new E.type(H.loc, 1)
+				T.copy_evidences(E)
+				E.use(1)
+				T.add_blood(H)
+				E.zero_amount() //Try to delete the teeth
+				add_logs(user, H, "torn out the tooth from", src)
+				H.visible_message("<span class='danger'>[user] tears off [H]'s tooth with [src]!</span>",
+								"<span class='userdanger'>[user] tears off your tooth with [src]!</span>")
+				var/armor = H.run_armor_check(O, "melee")
+				H.apply_damage(rand(1,5), BRUTE, O, armor)
+				playsound(H, 'sound/misc/tear.ogg', 40, 1, -1) //RIP AND TEAR. RIP AND TEAR.
+				H.emote("scream")
+				user.doing_something = 0
+			else
+				user << "<span class='notice'>Your attempt to pull out a teeth fails...</span>"
+				user.doing_something = 0
 			return
+		else
+			user << "<span class='notice'>You are already trying to pull out a teeth!</span>"
+		return
 	if(istype(C) && C.handcuffed && istype(C.handcuffed, /obj/item/weapon/restraints/handcuffs/cable))
 		user.visible_message("<span class='notice'>[user] cuts [C]'s restraints with [src]!</span>")
 		qdel(C.handcuffed)
@@ -164,7 +174,7 @@
 		..()
 
 /obj/item/weapon/wirecutters/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is cutting at \his arteries with the [src.name]! It looks like \he's trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is cutting at \his arteries with the [name]! It looks like \he's trying to commit suicide.</span>")
 	playsound(loc, hitsound, 50, 1, -1)
 	return (BRUTELOSS)
 
@@ -195,6 +205,8 @@
 	var/change_icons = 1
 	var/can_off_process = 0
 	var/light_intensity = 2 //how powerful the emitted light is when used.
+	var/spam_check = 0
+	var/spam_level = 0
 	heat = 3800
 
 /obj/item/weapon/weldingtool/New()
@@ -240,29 +252,36 @@
 	..()
 
 
-/obj/item/weapon/weldingtool/attack(mob/living/carbon/human/H, mob/user)
+/obj/item/weapon/weldingtool/attack(mob/living/carbon/human/H, mob/user, def_zone)
 	if(!istype(H))
 		return ..()
 
 	var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_sel.selecting))
 
-	if(affecting.status == ORGAN_ROBOTIC && user.a_intent != "harm")
-		if(src.remove_fuel(1))
-			playsound(loc, 'sound/items/Welder.ogg', 50, 1)
-			user.visible_message("<span class='notice'>[user] starts to fix some of the dents on [H]'s [affecting.getDisplayName()].</span>", "<span class='notice'>You start fixing some of the dents on [H]'s [affecting.getDisplayName()].</span>")
-			if(!do_mob(user, H, 50))	return
-			item_heal_robotic(H, user, 5, 0)
+	if(user.a_intent != "harm")
+		if(affecting.status == ORGAN_ORGANIC && affecting.bloodloss > 0)
+			if(remove_fuel(1))
+				playsound(loc, 'sound/items/Welder.ogg', 50, 1)
+				user.visible_message("<span class='notice'>[user] starts to close up wounds on [H]'s [affecting].</span>", "<span class='notice'>You start closing up wounds on [H]'s [affecting].</span>")
+				if(!do_mob(user, H, 50))	return
+				user.visible_message("<span class='notice'>[user] has closed up wounds [H]'s [affecting].</span>", "<span class='notice'>You closed up wounds on [H]'s [affecting].</span>")
+				affecting.heal_damage(bleed=affecting.bloodloss)
+				affecting.take_damage(burn=10) //Quite harsh tradeoff
 			return
-		else
-			return
-	else
-		return ..()
+		else if(affecting.status == ORGAN_ROBOTIC && affecting.get_damage() > 0)
+			if(remove_fuel(1))
+				playsound(loc, 'sound/items/Welder.ogg', 50, 1)
+				user.visible_message("<span class='notice'>[user] starts to fix some of the dents on [H]'s [affecting].</span>", "<span class='notice'>You start fixing some of the dents on [H]'s [affecting].</span>")
+				if(!do_mob(user, H, 50))	return
+				item_heal_robotic(H, user, 5, 0)
+			return //It's neither organic or robotic... ...then what the hell is it!?
+	return ..()
 
 /obj/item/weapon/weldingtool/process()
 	switch(welding)
 		if(0)
 			force = 3
-			damtype = "brute"
+			damtype = BRUTE
 			update_icon()
 			if(!can_off_process)
 				SSobj.processing.Remove(src)
@@ -270,7 +289,7 @@
 	//Welders left on now use up fuel, but lets not have them run out quite that fast
 		if(1)
 			force = 15
-			damtype = "fire"
+			damtype = BURN
 			if(prob(5))
 				remove_fuel(1)
 			update_icon()
@@ -282,6 +301,15 @@
 		if(M.l_hand == src || M.r_hand == src)
 			location = get_turf(M)
 	if(isturf(location))
+		var/datum/gas_mixture/air_contents = location.return_air()
+		var/mob/last = get_mob_by_ckey(fingerprintslast)
+		if((air_contents.toxins > 1) && !(spam_check))
+		//if((air_contents.toxins > 0) && !(location.contents.Find(/obj/effect/hotspot))) This would be better combined with spam_check.
+			spam_check = 1 //There is no reason to message is a multitude of times in such a short period
+			spawn(600)
+				spam_check = 0 //Greater delay, this is so one welding tool isn't later totally masked from detection of fire sparking.
+			message_admins("Plasma at <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[location.x];Y=[location.y];Z=[location.z]'>(JMP)</a>. triggered by welder, last touched by [key_name_admin(last)]<A HREF='?_src_=holder;adminmoreinfo=\ref[last]'>(?)</A> (<A HREF='?_src_=holder;adminplayerobservefollow=\ref[last]'>FLW</A>).")
+			investigate_log("Plasma at: X=[location.x];Y=[location.y];Z=[location.z];, trigger by welder last touched by [key_name_admin(last)]", "atmos")
 		location.hotspot_expose(700, 5)
 
 
@@ -293,24 +321,36 @@
 			if(D.reagents.has_reagent("welding_fuel"))
 				D.reagents.trans_id_to(src, "welding_fuel", max_fuel)
 				user << "<span class='notice'>[src] refueled.</span>"
-				playsound(src.loc, 'sound/effects/refill.ogg', 50, 1, -6)
+				playsound(loc, 'sound/effects/refill.ogg', 50, 1, -6)
 				update_icon()
 				return
 			else
 				user << "<span class='notice'>[D] has not enough welding fuel to refill!</span>"
 				return
 		else
-			message_admins("[key_name_admin(user)] triggered a chemtank explosion.")
-			log_game("[key_name(user)] triggered a chemtank explosion.")
-			user.attack_log += text("\[[time_stamp()]\] <font color='red'>Has detonated a chem tank @ [D ? "[D.x],[D.y],[D.z]" : "UNKNOWN LOCATION"]</font>")
 			user << "<span class='warning'>That was stupid of you.</span>"
-			if(D)
-				D.boom()
+			D.boom(user)
 			return
 
 	if(welding)
 		remove_fuel(1)
 		var/turf/location = get_turf(user)
+		var/datum/gas_mixture/air_contents = location.return_air()
+		var/mob/last = get_mob_by_ckey(fingerprintslast)
+		if((air_contents.toxins > 1) && !(spam_check))
+		//if((air_contents.toxins > 0) && !(location.contents.Find(/obj/effect/hotspot))) This would be better combined with spam_check.
+			if (spam_level > 3)
+				spam_check = 1
+				spawn(50)
+					spam_level++
+					spam_check = 0
+			if (spam_level == 3)
+				spam_check = 1
+				spawn(600)
+					spam_level = 0
+					spam_check = 0
+			message_admins("Plasma at <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[location.x];Y=[location.y];Z=[location.z]'>(JMP)</a>. triggered by welder, last touched by [key_name_admin(last)]<A HREF='?_src_=holder;adminmoreinfo=\ref[last]'>(?)</A> (<A HREF='?_src_=holder;adminplayerobservefollow=\ref[last]'>FLW</A>).")
+			investigate_log("Plasma at: X=[location.x];Y=[location.y];Z=[location.z];, trigger by welder last touched by [key_name_admin(last)]", "atmos")
 		location.hotspot_expose(700, 50, 1)
 
 		if(isliving(O))
@@ -372,7 +412,7 @@
 		if(get_fuel() >= 1)
 			user << "<span class='notice'>You switch [src] on.</span>"
 			force = 15
-			damtype = "fire"
+			damtype = BURN
 			hitsound = 'sound/items/welder.ogg'
 			update_icon()
 			SSobj.processing |= src
@@ -385,7 +425,7 @@
 		else
 			user << "<span class='warning'>[src] shuts off!</span>"
 		force = 3
-		damtype = "brute"
+		damtype = BRUTE
 		hitsound = "swing_hit"
 		update_icon()
 
@@ -498,6 +538,7 @@
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	force = 7
+	stamina_percentage = 0.6
 	throwforce = 10
 	item_state = "crowbar"
 	w_class = 2
@@ -508,7 +549,7 @@
 	toolspeed = 1
 
 /obj/item/weapon/crowbar/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is putting the [src.name] into \his mouth and proceeds to weigh down! It looks like \he's trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is putting the [name] into \his mouth and proceeds to weigh down! It looks like \he's trying to commit suicide.</span>")
 	playsound(loc, 'sound/weapons/grapple.ogg', 50, 1, -1)
 	sleep(3)
 	var/turf/simulated/location = get_turf(user)
@@ -521,11 +562,13 @@
 	icon_state = "red_crowbar"
 	item_state = "crowbar_red"
 	force = 8
+	stamina_percentage = 0.6
 
 /obj/item/weapon/crowbar/large
 	name = "crowbar"
 	desc = "It's a big crowbar. It doesn't fit in your pockets, because it's big."
 	force = 12
+	stamina_percentage = 0.5
 	w_class = 3
 	throw_speed = 3
 	throw_range = 3

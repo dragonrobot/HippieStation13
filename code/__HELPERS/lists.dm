@@ -40,11 +40,6 @@
 			return L[index]
 	return
 
-/proc/islist(list/L)
-	if(istype(L))
-		return 1
-	return 0
-
 //Return either pick(list) or null if list is not of type /list or is empty
 /proc/safepick(list/L)
 	if(istype(L) && L.len)
@@ -57,11 +52,17 @@
 	return 0
 
 //Checks for specific types in a list
-/proc/is_type_in_list(atom/A, list/L)
+/proc/is_type_in_list(atom/A, list/L) //Thank RemieRichards for writing this
+	if (!L.len)
+		return 0
+	if (!L[L[1]])
+		generate_type_list_cache(L)
+	return L[A.type]
+
+/proc/generate_type_list_cache(L)
 	for(var/type in L)
-		if(istype(A, type))
-			return 1
-	return 0
+		for(var/T in typesof(type))
+			L[T] = 1
 
 //Empties the list by setting the length to 0. Hopefully the elements get garbage collected
 /proc/clearlist(list/list)
@@ -349,3 +350,18 @@
 	while(L.Remove(null))
 		continue
 	return L
+
+//checks if the values associated to the elements of the first list are all bigger or equal than the ones of the second(Only works with lists with number values!)
+/proc/compareAllValues(list/A, list/B)
+	for(var/i in (A & B))
+		if(A[i] < B[i])
+			return FALSE
+	. = TRUE
+
+//Deletes all datums in the list and returns amount of deletions.
+/proc/deleteAllInList(list/L)
+	var/dels = 0
+	for(var/datum/i in L)
+		qdel(i)
+		dels++
+	return dels

@@ -71,6 +71,7 @@ Word definitions:
 	return
 
 /obj/effect/rune/attack_hand(mob/living/user)
+	user.changeNext_move(CLICK_CD_MELEE)
 	if(!iscultist(user))
 		user << "<span class='warning'>You aren't able to understand the words of [src].</span>"
 		return
@@ -707,6 +708,11 @@ var/list/teleport_other_runes = list()
 		var/mob/living/carbon/C = user
 		C.apply_damage(2, BRUTE, pick("l_arm", "r_arm"))
 
+/obj/effect/rune/wall/blood_trail
+	icon = 'icons/effects/blood.dmi'
+	icon_state = "tracks"
+	color = null
+	density = 1
 
 //Rite of the Unheard Whisper:  Deafens all non-cultists nearby.
 /obj/effect/rune/deafen
@@ -833,7 +839,7 @@ var/list/teleport_other_runes = list()
 		log_game("Talisman Imbue rune failed - no nearby runes")
 		return
 	var/obj/effect/rune/picked_rune = pick(nearby_runes)
-	var/list/split_rune_type = text2list("[picked_rune.type]", "/")
+	var/list/split_rune_type = splittext("[picked_rune.type]", "/")
 	var/imbue_type = split_rune_type[split_rune_type.len]
 	var/talisman_type = text2path("/obj/item/weapon/paper/talisman/[imbue_type]")
 	if(ispath(talisman_type))
@@ -924,6 +930,7 @@ var/list/teleport_other_runes = list()
 	var/drained_amount = rand(5,25)
 	target.apply_damage(drained_amount, BRUTE, "chest")
 	user.adjustBruteLoss(-drained_amount)
+	user.adjustBloodLoss(-drained_amount/10)
 	target << "<span class='warning'>You feel extremely weak.</span>"
 	user.visible_message("<span class='warning'>Blood flows from the rune into [user]!</span>", \
 						 "<span class='danger'>[target]'s blood flows into you, healing your wounds and revitalizing your spirit.</span>")

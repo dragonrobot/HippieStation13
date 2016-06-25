@@ -9,7 +9,6 @@
 			container.icon_state = "mmi_dead"
 	stat = DEAD
 
-	if(blind)	blind.layer = 0
 	sight |= SEE_TURFS|SEE_MOBS|SEE_OBJS
 	see_in_dark = 8
 	see_invisible = SEE_INVISIBLE_LEVEL_TWO
@@ -20,8 +19,8 @@
 	return ..(gibbed)
 
 /mob/living/carbon/brain/gib(animation = 0)
-	if(container && istype(container, /obj/item/device/mmi))
-		qdel(container)//Gets rid of the MMI if there is one
+	if(container && (istype(container, /obj/item/device/mmi) || istype(container, /obj/item/organ/limb/head)))
+		qdel(container)//Gets rid of the MMI or head if there is one
 	if(loc)
 		if(istype(loc,/obj/item/organ/internal/brain))
 			qdel(loc)//Gets rid of the brain item

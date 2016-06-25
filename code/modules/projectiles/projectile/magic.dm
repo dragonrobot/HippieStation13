@@ -64,13 +64,6 @@
 		else
 			target << "<span class='notice'>You rise with a start, you're alive!!!</span>"
 
-/obj/item/projectile/magic/pellet
-	name = "magic pellet"
-	icon_state = "moonslash"
-	damage = 15
-	damage_type = BRUTE
-	nodamage = 0
-
 /obj/item/projectile/magic/teleport
 	name = "bolt of teleportation"
 	icon_state = "bluespace"
@@ -243,7 +236,7 @@
 						H.real_name = H.dna.species.random_name(H.gender,1)
 					H.update_body()
 					H.update_hair()
-					H.update_mutcolor()
+					H.update_body_parts()
 					H.dna.update_dna_identity()
 				else
 					return

@@ -11,6 +11,7 @@ var/list/image/ghost_darkness_images = list() //this is a list of images for thi
 	anchored = 1	//  don't get pushed around
 	invisibility = INVISIBILITY_OBSERVER
 	languages = ALL
+	hud_possible = list(ANTAG_HUD_ADMIN)
 	var/can_reenter_corpse
 	var/datum/hud/living/carbon/hud = null // hud
 	var/bootime = 0
@@ -48,7 +49,11 @@ var/list/image/ghost_darkness_images = list() //this is a list of images for thi
 			else
 				name = random_unique_name(gender)
 
-		mind = body.mind	//we don't transfer the mind but we keep a reference to it.
+		if(body)
+			if(body.mind)
+				body.mind.ghost = TRUE
+			
+			mind = body.mind	//we don't transfer the mind but we keep a reference to it.
 
 	if(!T)	T = pick(latejoin)			//Safety in case we cannot find the body's position
 	loc = T
@@ -81,9 +86,8 @@ Works together with spawning an observer, noted above.
 
 /mob/proc/ghostize(can_reenter_corpse = 1)
 	if(key)
-		if(!cmptext(copytext(key,1,2),"@")) // Skip aghosts.
-			var/mob/dead/observer/ghost = new(src)	// Transfer safety to observer spawning proc.
-			SStgui.on_transfer(src, ghost) // Transfer NanoUIs.
+		if(!cmptext(copytext(key,1,2),"@")) //aghost
+			var/mob/dead/observer/ghost = new(src)	//Transfer safety to observer spawning proc.
 			ghost.can_reenter_corpse = can_reenter_corpse
 			ghost.key = key
 			return ghost
@@ -96,16 +100,35 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 	set name = "Ghost"
 	set desc = "Relinquish your life and enter the land of the dead."
 
+	var/mob/living/carbon/H = src
+
+	var/confirm_ghost = FALSE
+
 	if(stat != DEAD)
 		succumb()
+
 	if(stat == DEAD)
 		ghostize(1)
-	else
-		var/response = alert(src, "Are you -sure- you want to ghost?\n(You are alive. If you ghost whilst still alive you may not play again this round! You can't change your mind so choose wisely!!)","Are you sure you want to ghost?","Ghost","Stay in body")
-		if(response != "Ghost")	return	//didn't want to ghost after-all
-		ghostize(0)						//0 parameter is so we can never re-enter our body, "Charlie, you can never come baaaack~" :3
-	return
 
+	if(istype(H))
+		if(H.dna)
+			if(H.dna.check_mutation(CLUWNEMUT) && stat != DEAD)
+				H << "Cluwnes cannot ghost until they've died! Find a natural means of death!"
+				return
+			else
+				confirm_ghost = TRUE
+	else
+		confirm_ghost = TRUE
+
+	if(confirm_ghost)
+		var/response = alert(src, "Are you -sure- you want to ghost?\n(You are alive. If you ghost whilst still alive you may not play again this round! You can't change your mind so choose wisely!!)","Are you sure you want to ghost?","Ghost","Stay in body")
+
+		if(response != "Ghost")	
+			return	//didn't want to ghost after-all
+
+		ghostize(0)	//0 parameter is so we can never re-enter our body, "Charlie, you can never come baaaack~" :3
+
+	return
 
 /mob/dead/observer/Move(NewLoc, direct)
 	if(NewLoc)
@@ -150,18 +173,27 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 /mob/dead/observer/verb/reenter_corpse()
 	set category = "Ghost"
 	set name = "Re-enter Corpse"
-	if(!client)	return
+
+	if(!client)	
+		return
+
 	if(!(mind && mind.current))
 		src << "<span class='warning'>You have no body.</span>"
 		return
+
 	if(!can_reenter_corpse)
 		src << "<span class='warning'>You cannot re-enter your body.</span>"
 		return
+
 	if(mind.current.key && copytext(mind.current.key,1,2)!="@")	//makes sure we don't accidentally kick any clients
 		usr << "<span class='warning'>Another consciousness is in your body...It is resisting you.</span>"
 		return
-	SStgui.on_transfer(src, mind.current) // Transfer NanoUIs.
+
 	mind.current.key = key
+
+	var/mob/living/L = mind.current
+	L.mind.ghost = FALSE
+
 	return 1
 
 /mob/dead/observer/proc/notify_cloning(var/message, var/sound)
@@ -351,6 +383,8 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 		return 0
 
 	target.key = key
+	mind.ghost = FALSE
+	
 	return 1
 
 
@@ -392,7 +426,7 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 		if(href_list["reenter"])
 			reenter_corpse()
 
-/mob/dead/observer/canUseTopic()
-	if(check_rights(R_ADMIN, 0))
-		return 1
+//We don't want to update the current var
+//But we will still carry a mind.
+/mob/dead/observer/mind_initialize()
 	return

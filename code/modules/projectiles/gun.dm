@@ -16,6 +16,7 @@
 	throw_speed = 3
 	throw_range = 5
 	force = 5
+	stamina_percentage = 0.6
 	origin_tech = "combat=1"
 	needs_permit = 1
 	attack_verb = list("struck", "hit", "bashed")
@@ -201,7 +202,7 @@
 
 /obj/item/weapon/gun/proc/process_fire(atom/target as mob|obj|turf, mob/living/user as mob|obj, message = 1, params, zone_override)
 	add_fingerprint(user)
-
+	add_logs(user, target, "shot towards")
 	if(semicd)
 		return
 
@@ -213,6 +214,8 @@
 
 	if(burst_size > 1)
 		for(var/i = 1 to burst_size)
+			if(!user)
+				break
 			if(!issilicon(user))
 				if( i>1 && !(src in get_both_hands(user))) //for burst firing
 					break
@@ -255,10 +258,11 @@
 		spawn(fire_delay)
 			semicd = 0
 
-	if(user.hand)
-		user.update_inv_l_hand()
-	else
-		user.update_inv_r_hand()
+	if(user)
+		if(user.hand)
+			user.update_inv_l_hand()
+		else
+			user.update_inv_r_hand()
 	feedback_add_details("gun_fired","[src.type]")
 
 /obj/item/weapon/gun/attack(mob/M as mob, mob/user)

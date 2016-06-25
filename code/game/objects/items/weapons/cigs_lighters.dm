@@ -44,7 +44,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	if(lit == 0)
 		lit = 1
 		icon_state = "match_lit"
-		damtype = "fire"
+		damtype = BURN
 		force = 3
 		hitsound = 'sound/items/welder.ogg'
 		item_state = "cigon"
@@ -58,7 +58,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 /obj/item/weapon/match/proc/matchburnout()
 	if(lit == 1)
 		lit = -1
-		damtype = "brute"
+		damtype = BRUTE
 		force = initial(force)
 		icon_state = "match_burnt"
 		item_state = "cigoff"
@@ -126,7 +126,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	..()
 	flags |= NOREACT // so it doesn't react until you light it
 	create_reagents(chem_volume) // making the cigarette a chemical holder with a maximum volume of 15
-	reagents.add_reagent("nicotine", 5)
+	reagents.add_reagent("nicotine", 15)
 
 /obj/item/clothing/mask/cigarette/attackby(obj/item/weapon/W, mob/user, params)
 	..()
@@ -174,11 +174,29 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 		name = "lit [name]"
 		attack_verb = list("burnt", "singed")
 		hitsound = 'sound/items/welder.ogg'
-		damtype = "fire"
+		damtype = BURN
 		force = 4
 		if(reagents.get_reagent_amount("plasma")) // the plasma explodes when exposed to fire
 			var/datum/effect_system/reagents_explosion/e = new()
 			e.set_up(round(reagents.get_reagent_amount("plasma") / 2.5, 1), get_turf(src), 0, 0)
+			e.start()
+			if(ismob(loc))
+				var/mob/M = loc
+				M.unEquip(src, 1)
+			qdel(src)
+			return
+		if(reagents.get_reagent_amount("nitroglycerin")) // nitroglycerin is a ridiculously strong explosive that should explode like plasma when smoked
+			var/datum/effect_system/reagents_explosion/e = new()
+			e.set_up(round(reagents.get_reagent_amount("nitroglycerin") / 2.5, 1), get_turf(src), 0, 0)
+			e.start()
+			if(ismob(loc))
+				var/mob/M = loc
+				M.unEquip(src, 1)
+			qdel(src)
+			return
+		if(reagents.get_reagent_amount("blackpowder")) // blackpowder isn't as strong as nitroglycerin but it's stronger than welding fuel
+			var/datum/effect_system/reagents_explosion/e = new()
+			e.set_up(round(reagents.get_reagent_amount("blackpowder") / 3.75, 1), get_turf(src), 0, 0)
 			e.start()
 			if(ismob(loc))
 				var/mob/M = loc
@@ -216,8 +234,8 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 		if(iscarbon(loc))
 			var/mob/living/carbon/C = loc
 			if (src == C.wear_mask) // if it's in the human/monkey mouth, transfer reagents to the mob
-				if(prob(30)) // so it's not an instarape in case of acid
-					var/fraction = min(REAGENTS_METABOLISM/reagents.total_volume, 5)
+				if(prob(15)) // so it's not an instarape in case of acid
+					var/fraction = min(REAGENTS_METABOLISM/reagents.total_volume, 1)
 					reagents.reaction(C, INGEST, fraction)
 				reagents.trans_to(C, REAGENTS_METABOLISM)
 				return
@@ -382,7 +400,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 		new /obj/effect/decal/cleanable/ash(location)
 		if(ismob(loc))
 			var/mob/living/M = loc
-			M << "<span class='notice'>Your [name] goes out, and you empty the ash.</span>"
+			M << "<span class='notice'>Your [name] goes out.</span>"
 			lit = 0
 			icon_state = icon_off
 			item_state = icon_off
@@ -494,7 +512,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 			playsound(src, sound_toggleON, 30, 1, -1)
 			update_icon()
 			force = 5
-			damtype = "fire"
+			damtype = BURN
 			hitsound = 'sound/items/welder.ogg'
 			attack_verb = list("burnt", "singed")
 			if(!istype(src, /obj/item/weapon/lighter/greyscale))

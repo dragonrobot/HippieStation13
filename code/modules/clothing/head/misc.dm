@@ -71,6 +71,7 @@
 	icon_state = "cardborg_h"
 	item_state = "cardborg_h"
 	flags_cover = HEADCOVERSEYES
+	flags = BLOCKHAIR
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE
 
 /obj/item/clothing/head/justice
@@ -233,6 +234,10 @@
 			candy_cooldown = world.time+1200
 		else
 			M << "You just took a candy corn! You should wait a couple minutes, lest you burn through your stash."
+
+/obj/item/clothing/head/fedora/detective/alt //For detective locker
+	icon_state = "fedora"
+	item_state = "fedora"
 
 /obj/item/clothing/head/sombrero
 	name = "sombrero"

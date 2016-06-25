@@ -23,6 +23,8 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "userel-uae",
 							"<span class='shadowling'>You remove any equipment which would hinder your hatching and begin regurgitating the resin which will protect you.</span>")
 
 			for(var/obj/item/I in user) //drops all items
+				if (istype(I, /obj/item/weapon/implant) || istype(I, /obj/item/organ))
+					continue
 				user.unEquip(I)
 
 			sleep(50)
@@ -95,7 +97,7 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "userel-uae",
 			user.mind.AddSpell(new /obj/effect/proc_holder/spell/aoe_turf/flashfreeze(null))
 			user.mind.AddSpell(new /obj/effect/proc_holder/spell/self/collective_mind(null))
 			user.mind.AddSpell(new /obj/effect/proc_holder/spell/self/shadowling_regenarmor(null))
-			user.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shadowling_extend_shuttle(null))
+			//user.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shadowling_extend_shuttle(null))
 
 
 
@@ -169,6 +171,7 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "userel-uae",
 				sleep(50)
 				if(!ticker.mode.shadowling_ascended)
 					SSshuttle.emergency.request(null, 0.3)
+					SSshuttle.emergencyNoRecall = 1
 				ticker.mode.shadowling_ascended = 1
 				A.mind.remove_spell(src)
 				qdel(user)
